@@ -698,11 +698,41 @@ print(clf.predict(X_new)) # 输出为 [[ 5.96242338]]
 
 答案见附录A。
 
+## 第二章 从头到尾实践机器学习项目
+
+在这一章中，假设你被一个房地产公司录用当一名数据科学家，你将完成一个完整的机器学习项目。下面是你将要做的主要内容：
+
+1. 观察一幅大的图片
+1. 获得数据
+1. 将数据可视化，并获得某些直觉上的认识
+1. 为机器学习算法准备数据
+1. 选择一个模型进行训练
+1. 对你的模型进行调优
+1. 给出你的解决方案
+1. 载入，监视和维护你的系统
+
+> 注：这个例子完全是虚构的，只是为了向你讲解机器学习项目所需要的主要步骤，而不是学习什么关于房地产交易。
+
+### 工作在真实的数据之上
+
+当你在学机器学习时，最好是拿真实世界的数据进行试验，而不是人为制造的。幸运的是，有包含各个领域的上千个开放数据集可供选择。下面是一些你可以获得数据资源的地方：
+
+- 流行的开放数据仓库
+  - [UC Irvine Machine Learning Repository](http://archive.ics.uci.edu/ml/index.php)
+  - [Kaggle datasets](https://www.kaggle.com/datasets)
+  - [Amazon's AWS datasets](https://aws.amazon.com/fr/datasets/)
+- 元门户网站（它们给出了开放数据仓库列表）
+  - http://dataportals.org
+  - http://opendatamonitor.eu/
+  - http://quandl.com/
+- 其他的列出很多流行、开放数据仓库的网站
+  - [Wikipedia's list of Machine Learning datasets](https://en.wikipedia.org/wiki/List_of_datasets_for_machine_learning_research)
+  - [Quora.com question](https://www.quora.com/Where-can-I-find-large-datasets-open-to-the-public)
+  - [Datasets subreddit](https://www.reddit.com/r/datasets/)
 
 # 附录A 练习的答案
 
 ## 第一章 机器学习纵览
-
 
 1. 机器学习是建立一个能够从数据中进行学习的系统。学习的意思是让机器能够获得更好的性能。
 1. 目前来说没有算法可以解决的复杂问题；需要手动编写并维护大量规则的问题；需要能够根据环境变化及时作出调整的问题；辅助人类进行学习；
