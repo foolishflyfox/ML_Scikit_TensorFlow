@@ -294,15 +294,25 @@ code.language-yaml {
 <li><a href="#%E7%AC%AC%E4%BA%8C%E7%AB%A0-%E4%BB%8E%E5%A4%B4%E5%88%B0%E5%B0%BE%E5%AE%9E%E8%B7%B5%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E9%A1%B9%E7%9B%AE">第二章 从头到尾实践机器学习项目</a>
 <ul>
 <li><a href="#%E5%B7%A5%E4%BD%9C%E5%9C%A8%E7%9C%9F%E5%AE%9E%E7%9A%84%E6%95%B0%E6%8D%AE%E4%B9%8B%E4%B8%8A">工作在真实的数据之上</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#%E9%99%84%E5%BD%95a-%E7%BB%83%E4%B9%A0%E7%9A%84%E7%AD%94%E6%A1%88">附录A 练习的答案</a>
+<li><a href="#%E8%A7%82%E5%AF%9F%E5%A4%A7%E5%B1%80">观察大局</a>
 <ul>
-<li><a href="#%E7%AC%AC%E4%B8%80%E7%AB%A0-%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%BA%B5%E8%A7%88-1">第一章 机器学习纵览</a></li>
+<li><a href="#%E6%9E%84%E9%80%A0%E9%97%AE%E9%A2%98">构造问题</a></li>
+<li><a href="#%E9%80%89%E6%8B%A9%E4%B8%80%E4%B8%AA%E6%80%A7%E8%83%BD%E6%B5%8B%E9%87%8F">选择一个性能测量</a></li>
 </ul>
 </li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E9%99%84%E5%BD%95a-%E7%BB%83%E4%B9%A0%E7%9A%84%E7%AD%94%E6%A1%88">附录A 练习的答案</a></li>
+<li><a href="#%E9%99%84%E5%BD%95-b">附录 B</a><br>
+* <a href="#%E6%9E%84%E9%80%A0%E9%97%AE%E9%A2%98-%E8%A7%82%E5%AF%9F%E5%A4%A7%E5%B1%80">构造问题-观察大局</a><br>
+* <a href="#%E6%95%B0%E6%8D%AE%E6%8E%A2%E7%B4%A2">数据探索</a><br>
+* <a href="#%E6%95%B0%E6%8D%AE%E9%A2%84%E5%A4%84%E7%90%86">数据预处理</a><br>
+* <a href="#%E5%BE%97%E5%88%B0%E7%90%86%E6%83%B3%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%88%97%E8%A1%A8">得到理想模型的列表</a><br>
+* <a href="#%E7%B3%BB%E7%BB%9F%E8%B0%83%E4%BC%98">系统调优</a><br>
+* <a href="#%E7%BB%99%E5%87%BA%E4%BD%A0%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88">给出你的解决方案</a><br>
+* <a href="#%E8%BD%BD%E5%85%A5">载入</a></li>
 </ul>
 <h2 class="mume-header" id="%E5%89%8D%E8%A8%80">前言</h2>
 
@@ -826,12 +836,12 @@ X_new <span class="token operator">=</span> <span class="token punctuation">[</s
 <li>如果你用测试集调整超参数会有什么问题？</li>
 <li>什么是交叉验证？为什么要将用它创建确认集？</li>
 </ol>
-<p>答案见附录A。</p>
+<p>答案见<a href="#Chapter1Answer">附录A</a>。</p>
 <h2 class="mume-header" id="%E7%AC%AC%E4%BA%8C%E7%AB%A0-%E4%BB%8E%E5%A4%B4%E5%88%B0%E5%B0%BE%E5%AE%9E%E8%B7%B5%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E9%A1%B9%E7%9B%AE">第二章 从头到尾实践机器学习项目</h2>
 
 <p>在这一章中，假设你被一个房地产公司录用当一名数据科学家，你将完成一个完整的机器学习项目。下面是你将要做的主要内容：</p>
 <ol>
-<li>观察一幅大的图片</li>
+<li>观察大局</li>
 <li>获得数据</li>
 <li>将数据可视化，并获得某些直觉上的认识</li>
 <li>为机器学习算法准备数据</li>
@@ -869,10 +879,50 @@ X_new <span class="token operator">=</span> <span class="token punctuation">[</s
 </ul>
 </li>
 </ul>
+<p>在本章中，我们选择从StatLib仓库获取的加利福尼亚州的房子价格作为数据集（见图 2-1）。这个数据集基于1990年的统计。这些数据不适用于现在（那时候你还是能够在那里买套海景房的），但还是适合与机器学习的，因此我们将假定这些是最近的数据。为了更便于后续的学习，我们会增加一些类别属性，也会删除一些属性。</p>
+<p><img src="./asset/figure2_1.png" alt="figure2-1"></p>
+<h3 class="mume-header" id="%E8%A7%82%E5%AF%9F%E5%A4%A7%E5%B1%80">观察大局</h3>
+
+<p>欢迎来到机器学习房地产公司！你的第一个任务是利用加利福尼亚房屋价格的统计数据建立一个适用于加利福尼亚的房屋价格模型。信息来自于美国统计局所公布的数据，包括加利福尼亚每个街区组的人口、中等收入、中位房价格等（通常来说，一个街区组有600~3000的人口）。之后我们把街区组简称为区。</p>
+<p>你的模型应当能够从这些数据中进行学习，并最终能够通过给定的测量值预测任何一个地区中位房的价格。</p>
+<p><img src="./asset/suggest.png" alt="suggest"><br>
+作为一个有职业素养的数据科学家，你首先要给出机器学习项目的<a href="#201801261106">工作清单</a>。依据这个清单，绝大多数的机器学习项目应该能够完成的比较理想，但要注意一定要根据你的实际情况进行。在本章，我们将完成多个清单中的项目，但我们也会跳过一些，有的是因为它们的结论不证自明，有的是留到之后的章节进行讨论。</p>
+<h4 class="mume-header" id="%E6%9E%84%E9%80%A0%E9%97%AE%E9%A2%98">构造问题</h4>
+
+<p>首先，你需要咨询你的老板准确的商业目的；建立一个模型可能并非是终止的目标。公司打算如何从这个模型中获利？这一点非常重要，因为它决定了你应该如何够着问题，你应该选择什么算法，你应该用什么方法进行性能评估，你需要花多少努力来调整它？</p>
+<p>你的老板回答：你的模型的输出（对某个区中等价位房子的一个价格预测）将和其他的一些信息一起被输入到另一个系统中（见图 2-2）。下游的系统将会确定给定地区的房子是否值得投资。把这件事情做好非常重要，因为它直接影响到公司的收入。<br>
+<img src="./asset/figure2_2.png" alt="figure2_2"><br>
+<em>图 2-2 真实房地产投资的机器学习流水线步骤</em></p>
+<hr>
+<p><strong>流水线</strong></p>
+<p>一组数据处理过程有顺序的组合在一起称为数据流水线。流水线在机器学习系统中非常常见，因为有大量的数据需要去操作，也有大量的数据需要进行转换和应用。</p>
+<p>流水线上的各个部件通常是异步工作的。大量的数据被部件读取，部件进行处理后将结果输出到另一个数据存储器中，之后，流水线上的下一个部件再将这些数据读取，输出处理后的结果，这样继续下去。每一个部件都是独立的：两个部件之间的接口只是一个简单的数据存储器。这使得系统非常容易理解（通过数据流图的帮助），不同的团队可以专注于不同的部件。除此之外，如果其中一个部件不能正常工作，下游的部件通常能够利用故障部件在故障发生前的数据正常运行（至少一段时间）。这使得整个架构非常具有鲁棒性。</p>
+<p>另一方面，有时候如果没有实现合适的监视器，一个故障部件可能不会被发现。随着系统开始使用故障部件产生的数据，整个系统的性能都将下降。</p>
+<hr>
+<p>之后需要询问的问题是：当前的解决方案是什么（如果有的话）。这经常能作为你的一个参考，也能对如何解决这个问题有一定的启示。你的老板说，目前各个区的房价主要通过几个专家人工计算：这个专家组获得关于一个区的最新信息（不包括中位房价），之后，他们通过复杂的公式得到一个估算结果。这个过程非常昂贵，也很费时，他们的估算结果并不是很理想；他们的错误率在15%左右。</p>
+<p>好了，有了这些信息，你就可以准备开始设计你的系统了。首先，你需要构造这个问题：是监督学习，非监督学习，还是增强学习？是分类问题，回归问题，还是其他的？使用批量学习还是在线学习？在你继续往下看之前，先暂停下来好好想一想。</p>
+<p>你有答案了吗？让我们看一看你的答案是否正确：它显然是典型的监督学习任务，因为给了你训练标记（每个实例有一个期望的输出，比如：区的中位房价）。它也是一个典型的回归任务，因为需要你回答的是一个数值，更进一步，这是一个多变量的回归问题，因为系统使用了多个特征来做预测（它将使用区的人口，中等收入等特征）。在第一章中，你预测生活幸福指数时，只使用了一个变量——人均GDP，所以它是一个单变量回归问题。最后，该问题不会有源源不断的数据流到来，所以没必要快速适应变化的数据，并且数据量也非常小，内存能够全部加载，所以使用简单的批量学习算法就可以了。</p>
+<p><img src="./asset/suggest.png" alt="suggest"><br>
+如果数据量非常大，你既可以将批量学习任务分割到多个服务器上进行（使用MapReduce技术，我们之后会看到），也可以使用在线学习技术进行替代。</p>
+<h4 class="mume-header" id="%E9%80%89%E6%8B%A9%E4%B8%80%E4%B8%AA%E6%80%A7%E8%83%BD%E6%B5%8B%E9%87%8F">选择一个性能测量</h4>
+
+<p>你接下来的任务是选择一个性能测量。对于回归问题，最典型的性能测量方式是 <strong>均方根差(Root Mean Square Error, RMSE)</strong>。它计算的是系统预测值与实际值之差的标准差（标准差常用<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base"><span class="mord mathit" style="margin-right:0.03588em;">σ</span></span></span></span>表示，方差开根号得到）。比如说，RMSE等于50000表示大约68%的系统预测值和实际值之差不超过$50000，95%的预测值和实际值之差不超过$100000。</p>
+<blockquote>
+<p>如果特征呈现钟形的正态分布（也称为高斯分布）。这种分布非常常见.<br>
+“68-95-99.7”法则是指：68%的数据落在与平均值相距<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn><mi>σ</mi></mrow><annotation encoding="application/x-tex">1\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base"><span class="mord mathrm">1</span><span class="mord mathit" style="margin-right:0.03588em;">σ</span></span></span></span>的范围内，95%在<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>2</mn><mi>σ</mi></mrow><annotation encoding="application/x-tex">2\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base"><span class="mord mathrm">2</span><span class="mord mathit" style="margin-right:0.03588em;">σ</span></span></span></span>的范围内，99.7%在<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>3</mn><mi>σ</mi></mrow><annotation encoding="application/x-tex">3\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base"><span class="mord mathrm">3</span><span class="mord mathit" style="margin-right:0.03588em;">σ</span></span></span></span>的范围内</p>
+</blockquote>
+<p>等式2-1显示了计算RMSE的数学公式：</p>
+<p><em>等式 2-1 均方根差(RMSE)</em><br>
+<span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>R</mi><mi>M</mi><mi>S</mi><mi>E</mi><mo>(</mo><mi mathvariant="bold">X</mi><mo separator="true">,</mo><mi>h</mi><mo>)</mo><mo>=</mo><msqrt><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><mi>m</mi></mrow></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>m</mi></munderover><mo>(</mo><mi>h</mi><mo>(</mo><msup><mi mathvariant="bold">x</mi><mrow><mo>(</mo><mi>i</mi><mo>)</mo></mrow></msup><mo>)</mo><mo>−</mo><msup><mi>y</mi><mrow><mo>(</mo><mi>i</mi><mo>)</mo></mrow></msup><msup><mo>)</mo><mn>2</mn></msup></mrow></msqrt></mrow><annotation encoding="application/x-tex">RMSE(\bold X, h)=\sqrt{\frac{1}{m}\sum_{i=1}^m(h(\bold x^{(i)})-y^{(i)})^2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.8791470000000006em;"></span><span class="strut bottom" style="height:3.1568160000000005em;vertical-align:-1.277669em;"></span><span class="base"><span class="mord mathit" style="margin-right:0.00773em;">R</span><span class="mord mathit" style="margin-right:0.10903em;">M</span><span class="mord mathit" style="margin-right:0.05764em;">S</span><span class="mord mathit" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathbf">X</span><span class="mpunct">,</span><span class="mord mathit">h</span><span class="mclose">)</span><span class="mrel">=</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist svg-align" style="height:1.8791470000000006em;"><span style="top:-5.116816em;"><span class="pstrut" style="height:5.116816em;"></span><span class="mord" style="padding-left:1.056em;"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.32144em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathit">m</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathrm">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.6513970000000002em;"><span style="top:-1.872331em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathit mtight">i</span><span class="mrel mtight">=</span><span class="mord mathrm mtight">1</span></span></span></span><span style="top:-3.050005em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3000050000000005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathit mtight">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.277669em;"></span></span></span></span><span class="mopen">(</span><span class="mord mathit">h</span><span class="mopen">(</span><span class="mord"><span class="mord mathbf">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.814em;"><span style="top:-2.989em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathit mtight">i</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mbin">−</span><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.814em;"><span style="top:-2.989em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathit mtight">i</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.740108em;"><span style="top:-2.9890000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathrm mtight">2</span></span></span></span></span></span></span></span></span></span><span style="top:-3.8391470000000005em;"><span class="pstrut" style="height:5.116816em;"></span><span style="height:3.116816em;"><svg width="100%" height="3.116816em">
+            <svg viewBox="0 0 400000 3116" preserveAspectRatio="xMinYMax slice">
+            <path d="M702 0H400000v40H742v3062
+            l-4 4-4 4c-.667.667-2 1.5-4 2.5s-4.167 1.833-6.5 2.5-5.5 1-9.5 1h
+-12l-28-84c-16.667-52-96.667 -294.333-240-727l-212 -643 -85 170c-4-3.333-8.333
+-7.667-13 -13l-13-13l77-155 77-156c66 199.333 139 419.667 219 661 l218 661z
+M702 0H400000v40H742z"></path></svg></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.277669em;"></span></span></span></span></span></span></span></span></p>
 <h1 class="mume-header" id="%E9%99%84%E5%BD%95a-%E7%BB%83%E4%B9%A0%E7%9A%84%E7%AD%94%E6%A1%88">附录A 练习的答案</h1>
 
-<h2 class="mume-header" id="%E7%AC%AC%E4%B8%80%E7%AB%A0-%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%BA%B5%E8%A7%88-1">第一章 机器学习纵览</h2>
-
+<h2 id="Chapter1Answer">第一章 机器学习纵览</h2>
 <ol>
 <li>机器学习是建立一个能够从数据中进行学习的系统。学习的意思是让机器能够获得更好的性能。</li>
 <li>目前来说没有算法可以解决的复杂问题；需要手动编写并维护大量规则的问题；需要能够根据环境变化及时作出调整的问题；辅助人类进行学习；</li>
@@ -893,6 +943,187 @@ X_new <span class="token operator">=</span> <span class="token punctuation">[</s
 <li>确认集用于对模型的比较。用它可以选出最佳的模型和超参数。</li>
 <li>如果你用测试集来调整超参数，你可能会过拟合测试集，这会使泛化误差非常大（也许你最终加载的模型性能比你的预计要差）</li>
 <li>交叉验证是一种挑选模型的技术（用于选择超参数和模型），但不需要从训练集中特意划分出一部分数据作为确认集，这也节约了训练数据。</li>
+</ol>
+<h1 class="mume-header" id="%E9%99%84%E5%BD%95-b">附录 B</h1>
+
+<h2 id="201801261106">机器学习项目清单</h2>
+<p>该清单能够指导你开展你的机器学习项目，一共有8个主要的步骤：</p>
+<ol>
+<li>构造问题，观察大局。</li>
+<li>获取数据。</li>
+<li>探索数据，获得一些直觉(领悟)。</li>
+<li>对数据进行预处理，以使机器学习算法能够更好地发现数据中的潜在规律。</li>
+<li>尝试不同的模型，选出表现好的若干个。</li>
+<li>对选出的模型进行调优，最后将它们集成成为一个高效的解决方案。</li>
+<li>给出你的解决方案。</li>
+<li>加载、监视、维护你的系统</li>
+</ol>
+<p>显然，你可以根据实际需要修改上述列表。</p>
+<h3 class="mume-header" id="%E6%9E%84%E9%80%A0%E9%97%AE%E9%A2%98-%E8%A7%82%E5%AF%9F%E5%A4%A7%E5%B1%80">构造问题-观察大局</h3>
+
+<ol>
+<li>定义商业项目的目标</li>
+<li>你将如何使用你的解决方案？</li>
+<li>目前有哪些解决方法/变通的方案(如果有的话)？</li>
+<li>如何构造这个问题 (监督/非监督，在线/离线 等)？</li>
+<li>如何进行性能度量？</li>
+<li>性能度量是否与商业目标相一致？</li>
+<li>为了达到商业目标所需要的性能下限是多少？</li>
+<li>有没有可对比的问题？你能复用其中的经验或工具吗？</li>
+<li>能否将人的专业知识用上？</li>
+<li>你该如何手动解决这个问题？</li>
+<li>列出你（或其他人）所做的假设。</li>
+<li>如果可能的话，对假定进行核实。</li>
+</ol>
+<h3 id="201801261112">获取数据</h3>
+<p><strong>注意：</strong> 尽可能地实现采集数据的自动化，以便于更容易地获得最新数据。</p>
+<ol>
+<li>列出你需要什么数据，需要多少这样的数据。</li>
+<li>找到、记录从哪里你可以获得这些数据。</li>
+<li>计算这些数据需要多大的空间进行存储。</li>
+<li>遵守法律义务，如果需要，最好能够获得授权。</li>
+<li>获得对数据使用的授权。</li>
+<li>创建工作区（有足够的存储空间）。</li>
+<li>获得数据。</li>
+<li>将数据变换为容易操作的格式（而不改变数据本身）。</li>
+<li>对数据脱敏，确保敏感信息被删除或被保护（如匿名化）。</li>
+<li>查看数据的类型和大小（时间序列、采样值、地理信息 等）。</li>
+<li>抽取测试集，把它放在一边，先不要使用它</li>
+</ol>
+<h3 class="mume-header" id="%E6%95%B0%E6%8D%AE%E6%8E%A2%E7%B4%A2">数据探索</h3>
+
+<p><strong>注意：</strong> 从该领域的专家那里获得对以下步骤的具体实施的一些想法。</p>
+<ol>
+<li>对数据做一个拷贝用于数据探索（如果需要的话，从中采样一个易处理的数据规模）。</li>
+<li>创建一个 Jupyter notebook，用于记录你数据探索的过程。</li>
+<li>研究每个属性以及它的特性：
+<ul>
+<li>名称</li>
+<li>类型（枚举、整数/小数、有界/无界、文本、结构体 等）</li>
+<li>丢失的百分比</li>
+<li>噪声及其类型（随机、异常点、四舍五入误差 等）</li>
+<li>对完成任务是否有用</li>
+<li>分布类型（高斯分布、均匀分布、对数分布）</li>
+</ul>
+</li>
+<li>对于监督学习任务，确定目标属性(一个或多个)。</li>
+<li>数据可视化。</li>
+<li>研究属性之间的相关性。</li>
+<li>思考如果人工解决应该如果操作。</li>
+<li>确定什么格式是你想要得到的理想的数据变化。</li>
+<li>确定额外的有用数据（回顾 <a href="#201801261112">获取数据</a>）</li>
+<li>记录你的研究成果</li>
+</ol>
+<h3 class="mume-header" id="%E6%95%B0%E6%8D%AE%E9%A2%84%E5%A4%84%E7%90%86">数据预处理</h3>
+
+<p><strong>注意：</strong></p>
+<ul>
+<li>在数据拷贝上工作（保证原始数据集不受影响）</li>
+<li>对于你要应用的数据变换操作编写函数，原因有以下5条：
+<ul>
+<li>便于你下次得到新数据时能够更简单快捷地进行预处理</li>
+<li>这些函数可以被应用到你未来的项目中</li>
+<li>可用于对测试集中的数据的清洗和预处理</li>
+<li>一旦你的应用上线，可以用于清洗和处理新的实例</li>
+<li>更容易将你的预处理选择与一个超参数对应</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>数据清洗
+<ul>
+<li>修正或删除异常值（可选）</li>
+<li>填充数据中的缺失值（用0、平均值、中位数 等）或者直接删除它们所在的行（或列）</li>
+</ul>
+</li>
+<li>特征选择（可选）
+<ul>
+<li>删除对于任务而言没有意义的属性</li>
+</ul>
+</li>
+<li>特征工程，需要完成：
+<ul>
+<li>连续特征值得离散化</li>
+<li>分解特征（如 类别，日期/时间 等）</li>
+<li>对特征进行有效变换（如 log(x)、sqrt(x), x^2 等）</li>
+<li>将特征聚合成更有用的新特征</li>
+</ul>
+</li>
+<li>特征缩放：标准化或归一化特征值</li>
+</ol>
+<h3 class="mume-header" id="%E5%BE%97%E5%88%B0%E7%90%86%E6%83%B3%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%88%97%E8%A1%A8">得到理想模型的列表</h3>
+
+<p><strong>注意：</strong></p>
+<ul>
+<li>如果数据量非常大，你也许只采样较小的训练数据集，这样你就能在有限的时间内测试多种不同的模型（注意：这不利于复杂的模型如神经网络或随机深林）</li>
+<li>再一次强调，尽量实现这些步骤的自动化</li>
+</ul>
+<ol>
+<li>使用标准参数训练许多简单快速的不同模型（比如说，线性模型、朴素贝叶斯、支持向量机、随机森林、神经网络等）</li>
+<li>测量、比较它们的性能
+<ul>
+<li>对于每种模型，使用 N-折交叉验证，并计算在N折上性能测量的平均值和标准差</li>
+</ul>
+</li>
+<li>分别分析对每一种算法来说，哪些是其最有用的变量</li>
+<li>分析模型产生的错误类型
+<ul>
+<li>我们应该使用何种数据来避免这些错误</li>
+</ul>
+</li>
+<li>快速进行特征选择和建立工程</li>
+<li>对上面5步进行1~2次的快速迭代</li>
+<li>列出3到5个性能最好的模型，根据不同的错误类型选择模型</li>
+</ol>
+<h3 class="mume-header" id="%E7%B3%BB%E7%BB%9F%E8%B0%83%E4%BC%98">系统调优</h3>
+
+<p><strong>注意：</strong></p>
+<ul>
+<li>在这一阶段，你应当使用尽可能多的数据，特别是在调优的最后阶段。</li>
+<li>尽量实现整个过程的自动化</li>
+</ul>
+<ol>
+<li>通过交叉验证调优超参数
+<ul>
+<li>将如何对数据进行变换视为超参数，特别是你不知道它们孰优孰劣（比如说，对于缺损数据，是应该置0，还是用中位数替代，或者直接删除掉）</li>
+<li>在超参数的可取值非常少时，可以按顺序一个一个去尝试，而如果超参数非常大，用随机地方式尝试选出较好的超参数。如果训练的过程非常长，你可以试试用贝叶斯最优化方法（例如，使用高斯过程先验，由Jasper Snoek, Hugo Larochelle 和 Adams <a href="https://arxiv.org/pdf/1206.2944.pdf">论述过</a>）</li>
+</ul>
+</li>
+<li>模型集成。通常来说，将多个你认为最好的模型合并到一起，会比它们单独运行的性能要好。</li>
+<li>在你对自己的模型有了足够的信心后，在测试集上测试其性能，估计泛化误差。</li>
+</ol>
+<p><img src="./asset/warning.png" alt="warning"><br>
+在计算了泛化误差之后，就不要再试图调整你的模型了，这样只是让你的模型开始对测试数据过拟合。</p>
+<h3 class="mume-header" id="%E7%BB%99%E5%87%BA%E4%BD%A0%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88">给出你的解决方案</h3>
+
+<ol>
+<li>记录你做了哪些工作</li>
+<li>准备一个漂亮的演示文稿
+<ul>
+<li>首先要强调问题的大局</li>
+</ul>
+</li>
+<li>解释为什么你的解决方案能够实现商业目标</li>
+<li>不要忘了展示在整个过程中你所注意到的值得关注的点
+<ul>
+<li>描述起作用的和不起作用的东西</li>
+<li>列出你所作出的假定，以及你的系统存在的缺陷</li>
+</ul>
+</li>
+<li>确保你的重要发现能够通过漂亮的可视化图或者是容易记忆的话向别人传递（比如说：收入的中位数对房屋价格的影响最大）</li>
+</ol>
+<h3 class="mume-header" id="%E8%BD%BD%E5%85%A5">载入</h3>
+
+<ol>
+<li>使你的系统能够运用到生产中（将生产中的输出与你系统的输入进行对接，编写单元测试，等等）</li>
+<li>编写监视程序，用于在规定的时间间隔检查系统的性能，当其性能下降或系统崩溃时，发出警报：
+<ul>
+<li>也要注意性能的慢性下降：随着数据的不断到来，模型会慢慢“生锈”</li>
+<li>测量性能可能需要一个人类管道（比如通过众包服务）</li>
+<li>监视输入到系统中的数据质量（例如：一个出故障的传感器将随机的值发送过来，或者是其他工作组的数据是陈旧的）。这对于在线学习系统来说非常重要</li>
+</ul>
+</li>
+<li>定期的使用新数据重新训练你的模型（还是那句老话，尽可能实现自动化）</li>
 </ol>
 
       </div>
@@ -970,15 +1201,25 @@ X_new <span class="token operator">=</span> <span class="token punctuation">[</s
 <li><a href="#%E7%AC%AC%E4%BA%8C%E7%AB%A0-%E4%BB%8E%E5%A4%B4%E5%88%B0%E5%B0%BE%E5%AE%9E%E8%B7%B5%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E9%A1%B9%E7%9B%AE">第二章 从头到尾实践机器学习项目</a>
 <ul>
 <li><a href="#%E5%B7%A5%E4%BD%9C%E5%9C%A8%E7%9C%9F%E5%AE%9E%E7%9A%84%E6%95%B0%E6%8D%AE%E4%B9%8B%E4%B8%8A">工作在真实的数据之上</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#%E9%99%84%E5%BD%95a-%E7%BB%83%E4%B9%A0%E7%9A%84%E7%AD%94%E6%A1%88">附录A 练习的答案</a>
+<li><a href="#%E8%A7%82%E5%AF%9F%E5%A4%A7%E5%B1%80">观察大局</a>
 <ul>
-<li><a href="#%E7%AC%AC%E4%B8%80%E7%AB%A0-%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%BA%B5%E8%A7%88-1">第一章 机器学习纵览</a></li>
+<li><a href="#%E6%9E%84%E9%80%A0%E9%97%AE%E9%A2%98">构造问题</a></li>
+<li><a href="#%E9%80%89%E6%8B%A9%E4%B8%80%E4%B8%AA%E6%80%A7%E8%83%BD%E6%B5%8B%E9%87%8F">选择一个性能测量</a></li>
 </ul>
 </li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E9%99%84%E5%BD%95a-%E7%BB%83%E4%B9%A0%E7%9A%84%E7%AD%94%E6%A1%88">附录A 练习的答案</a></li>
+<li><a href="#%E9%99%84%E5%BD%95-b">附录 B</a><br>
+* <a href="#%E6%9E%84%E9%80%A0%E9%97%AE%E9%A2%98-%E8%A7%82%E5%AF%9F%E5%A4%A7%E5%B1%80">构造问题-观察大局</a><br>
+* <a href="#%E6%95%B0%E6%8D%AE%E6%8E%A2%E7%B4%A2">数据探索</a><br>
+* <a href="#%E6%95%B0%E6%8D%AE%E9%A2%84%E5%A4%84%E7%90%86">数据预处理</a><br>
+* <a href="#%E5%BE%97%E5%88%B0%E7%90%86%E6%83%B3%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%88%97%E8%A1%A8">得到理想模型的列表</a><br>
+* <a href="#%E7%B3%BB%E7%BB%9F%E8%B0%83%E4%BC%98">系统调优</a><br>
+* <a href="#%E7%BB%99%E5%87%BA%E4%BD%A0%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88">给出你的解决方案</a><br>
+* <a href="#%E8%BD%BD%E5%85%A5">载入</a></li>
 </ul>
 </div>
       <a id="sidebar-toc-btn">≡</a>
