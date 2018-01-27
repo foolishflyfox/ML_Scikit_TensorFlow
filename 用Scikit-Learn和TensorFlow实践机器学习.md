@@ -1,7 +1,6 @@
 ---
 export_on_save:
  html: true
- pdf: true
 ---
 
 # 用Scikit-Learn和TensorFlow实践机器学习
@@ -782,6 +781,180 @@ print(clf.predict(X_new)) # 输出为 [[ 5.96242338]]
 
 *等式 2-1 均方根差(RMSE)*
 $$RMSE(\bold X, h)=\sqrt{\frac{1}{m}\sum_{i=1}^m(h(\bold x^{(i)})-y^{(i)})^2}$$
+
+---
+**注意：**
+该公式中包含的很多机器学习符号将会在这本书中经常出现：
+- m是计算RMSE所用数据集中实例的个数。
+    - 比如说，如果你测量RMSE时使用的确认集中包含了2000个区，那么就有 $m=2000$。<br><br>
+- $\bold x^{i}$ 是数据集中第i个包含所有特征值的向量（不包括标记label），$y^{(i)}$ 是其对应的标记（该实例想要得到的输出值）
+    - 比如说，如果数据集中第一个区的位置是西经118.29°，北纬 33.91°，该区的居民数为1416人，中位收入为38372美元，中等房价为156400美元（暂时先忽略其他的特征），那么$$\bold x^{(1)}=\left\lgroup\begin{matrix}-118.29\\ 33.91\\ 1,416 \\ 38,372\end{matrix}\right\rgroup$$并且：$$y^{(1)}=156,400$$
+- $\bold X$ 是一个包含了数据集中所有特征值（除标记外）的所有实例的一个矩阵，每一行都代表一个实例，第 $i$ 行等于 $\bold x^{(i)}$ 的转置，记为$(\bold x^{(i)})^{T}$
+    - 例如，用矩阵 $\bold X$ 来表示第一个区的数据：$$\bold X=\left \lgroup \begin{matrix} (\bold x^{(1)})^T \\ (\bold x^{(2)})^T \\ \vdots \\ (\bold x^{(1999)})^T \\ (\bold x^{(2000)})^T\end{matrix} \right \rgroup = \left\lgroup\begin{matrix}-118.29 & 33.91 & 1,416 & 38,371 \\ \vdots & \vdots  & \vdots & \vdots \end{matrix}\right\rgroup$$
+- $h$ 是你系统的预测函数，也称为 *假说* 。在你提供了一个实例的特征向量 $\bold x^{(i)}$后，它输出 $\hat{y}^{(i)}=h(\bold x^{(i)})$ 作为实例的预测结果（$\hat y$ 读作 “y-hat”）。
+    - 例如，如果你的系统预测第一个区，中位房子的价格是 158400美元，表示 $\hat y^{(1)}=h(\bold x^{(1)})=158400$ 。对该区来说预测的误差值为$\hat y^{(1)}-y^{(1)}=2000$。<br><br>
+- $RMSE(\bold X, h)$ 用于评估你所得到假说的损失函数。
+
+我们用小写字体表示标量值（例如：$m$ 或者 $y^{(i)}$）以及函数名（例如：$h$）, 小写粗体表示向量（例如：$\bold x^{(i)}$）, 用大写粗体表示矩阵（例如：$\bold X$）
+
+---
+
+虽说对于回归任务，RMSE是最通用的测量性能的手段，但在某些具体的情形下，你需要用到另一个函数。例如，对于有很多离群值的区，你应该使用 *平均绝对误差*（或称绝对偏差的平均），如等式 2-2：
+&nbsp; &nbsp; &nbsp; &nbsp; *等式 2-2 平均绝对误差*$$MAE(\bold X, h) = \frac{1}{m}\sum_{i=1}^{m}\left | h(\bold x^{(i)})-y^{(i)} \right |$$
+
+$RMSE$ 和 $MAE$ 都可以用于测量测量结果向量和目标向量之间的距离。各种距离测量的方案或称为范数如下：
+
+- 对平方和开根号对应的是欧几里得范数：这是你最熟悉的概念。它也被称为 $l_2$范式，用 $\| \cdot \| _ {2}$表示（或者仅仅是 $||\cdot||$）。
+
+- 计算绝对值之和对应的是 $l_1$范式，记为 $\|\cdot\| _ 1$。它有时候也被称为 *曼哈顿范式*，它所测量的是在你只能沿着城市街区的正交的边进行旅行时，从一个点到另一个点的距离（只需要将各条边的长度加起来即可）。
+- 更一般的，一个包含 $n$个元素的向量 $\bold v$ 对应的 $l_k$范式为：$\|\bold v\|_ k=(|v_0|^k+|v_1|^k+\cdots+|v_n|^k)^{\frac{1}{k}}$。$l_0$ 只是给出了向量的基数（即向量中元素的个数），而 $l_\infty$ 表示取所有元素中绝对值最大元素的绝对值。
+- 范数下标越大，表示越关注于绝对值大的元素。这就是为什么 $RMSE$ 比 $MAE$ 对离群点更敏感。但是如果离群点的数量随距离呈指数递减（比如高斯分布），那么$RMSE$的效果通常会更好。
+
+#### 验证假设
+
+最后，最好将当前你或其他人所做出的所有假设列出来，并进行核实，这能够提前发现某些严重的问题。例如，我们所作出的假定是：系统所预测的区价格将被交给下游的机器学习系统使用，但如果下游的系统仅仅将价格转换为若干种类型（例如：“便宜”，“中等”，“昂贵”），之后使用的是这几种分类而不是你提供的数值型价格，那么提供精确的价格就完全没有必要了，只需要分类正确即可。如果是这样的话，该任务应当被构造为分类问题。你应该不会希望在用构建回归模型的方式工作了好几个月之后才发现这一问题吧！
+
+幸运的是，你在与下游系统的负责人进行沟通后确定，他们需要的是确切的价格而不是一个类别。很好，一路绿灯，你现在可以开始编码了！
+
+### 获取数据
+
+现在可以动手了。打开你的笔记本，在Jupyter notebook中亲自写写的下面的代码示例。完整的代码可通过 https://github.com/ageron/handson-ml 获得。
+
+#### 创建工作区
+
+首先，你需要将Python安装上。也许，你的电脑上已经有Python了，如果没有，可以通过 https://www.python.org/ 获得，最好是安装 Python3 最新版本，当然，Python2.7 应该也能正常工作，但并不提倡使用。
+
+接下来，你需要为你的机器学习代码与数据集创建一个工作区。打开终端，敲入如下的命令(在 \$ 提示符之后)：
+```shell
+$ export ML_PATH="$HOME/ml"  # 你可以对路径进行修改
+$ mkdir -p $ML_PATH
+```
+
+你需要多个 Python 模块：Jupyter、NumPy、Pandas、Matplotlib 和 Scikit-Learn。如果你已经有了Jupyter，这些模块也安装好了，你可以直接跳到 [下载数据](#20180127150435) 这一部分。如果你现在还没有，有很多的方式可以安装它们（以及它们的依赖）。你可以使用你系统中的包管理工具（如：Ubuntu下的 apt-get，macOS下的 MacPorts 或者 HomeBrew），也可以通过安装文件安装用于科学计算的Python发行版（如 Anaconda），或者使用Python自带的包管理工具 pip（从Pyton 2.7.9 之后，安装Python时就会默认安装）。你可以通过下面的命令查看是否安装了 pip ：
+```
+$ pip3 --version
+pip 9.0.1 from [...]/lib/python3.6/site-packages (python 3.6)
+```
+
+> 我们将介绍在Linux或macOS的 bash 中的安装步骤，你在自己的电脑上执行时，可能需要将这些步骤稍稍修改一下。在Windows下，我们建议直接安装Anaconda。
+
+确保你的pip是最近的版本，至少也要是 > 1.4 版本的，才能支持二进制模块的安装（众所周知的wheels）。升级 pip 模块，可以输入：
+
+```
+$ pip3 install --upgrade pip
+Collecting pip
+[...]
+Successfully installed pip-9.0.1
+```
+> 你可能需要管理员权限来执行这条命令，如果是这样的话，直接在命令前加上`sudo`。
+
+---
+
+**创建一个隔离的环境**
+
+如果你希望在一个隔离的环境中工作（强烈推荐，这样你就能在不同的项目上工作而不会发生库版本之间的冲突），通过运行以下的命令可以安装 virtualenv
+
+```
+$ pip3 install --user --upgrade virtualenv
+Collecting virtualenv
+[...]
+Successfully installed virtualenv
+```
+
+现在，你可以通过输入下面的命令创建一个隔离的Python环境：
+```
+$ cd $ML_PATH
+$virtualenv env
+Using base prefix '[...]'
+New python executable in [...]/ml/env/bin/python
+Installing setuptools, pip, wheel...done.
+```
+现在，当你需要激活该环境时，只需要打开终端，输入：
+```
+$ cd $ML_PATH
+$ source env/bin/activate
+```
+当该环境被激活后，所有你通过pip安装的包都将被安装在这个隔离的环境中，而Python也将只能使用这些包（如果你希望能够访问系统所携带的包，你需要使用virtualenv的参数 `--system-site-packages` 选项。更多内容请查阅virtualenv的文档。）
+
+---
+
+现在，你可以通过简单的pip命令安装所有需要的模块及其依赖：
+```
+$ pip3 install --upgrade jupyter matplotlib numpy pandas scipy scikit-learn
+Collecting Jupyter
+  Downloading jupyter-1.0.0-py2.py3-none-any.whl
+Collecting matplotlib
+  [...]
+```
+检测模块的安装情况，使用导入命令尝试导入每个模块：
+```
+python -c "import matplotlib,jupyter,sklearn,pandas,numpy,scipy"
+```
+正常情况应该没有任何的输出。现在，你可以通过下面的命令启动Jupyter了：
+```
+$ jupyter notebook
+```
+现在，一个Jupyter服务器就在你的终端上运行了，通常该服务器侦听的是8888端口。你可以通过在web浏览器中输入 http://localhost:8888/ 来访问（通常这一步服务器也会自动执行）。你应该看到了一个空的工作目录（如果你是按照之前的命令执行了virtualenv指令，那工作区中只有一个 env 文件夹）。
+
+现在，通过点击 `New` 按钮，选择合适的Python版本（见图 2-3），创建一个新的Python notebook。
+![figure 2-3](./asset/figure2_3.png)
+*图 2-3 在Jupyter中的工作区*
+
+> Jupyter能够处理多种版本的Python，甚至是许多其他的语言如 R语言、Octave。
+
+上一操作主要做了3件事：首先，在你的工作区中创建了一个新的netebook文件，名称为 *Untitled.ipynb*；其次，用Jupyter Python内核运行这个notebook；最后，在浏览器的新窗口中打开这个notebook文件。你应当通过点击*Untitled*，输入新名字，将该notebook重命名为“Housing”（将被自动重命名为 *Housing.ipynb*）。
+
+一个 notebook包含了一列的单元格。每个单元格可以包含可执行的代码或格式化的文本。现在，notebook只包含了一个空的代码单元格 “In[1]:”。尝试在单元格中输入 **print("Hello world:")**，点击运行按钮（见图 2-4）或者是快捷键 Shift-Enter，会将当前单元格发送到Python内核中执行，并输出结果。结果将会在单元格之下显示。可以通过 Help > User Interface Tour 学习一些基础的内容。
+
+![figure 2-4](./asset/figure2_4.png)
+*图 2-4 Python notebook版 hello，world*
+
+<h4 id="20180127150435">下载数据</h4>
+
+通常来说，你的数据被存放在关系型数据库中（或者是其他常见的数据存储中），包含多张表/文档/文件。为了取得这些数据，你首先需要获得你的凭证和访问授权（有时候还需要检查法律约束，比如隐私领域可能会要求：不能将数据复制到不安全的存储介质中），并且熟悉数据的结构。在我们这个项目中比较简单：你只需要简单地下载一个压缩文件，提取出其中的CSV文件，但最好还是创建一个小函数来实现该功能。这通常来说非常有益，特别是数据如果是定期变化的情况，你可以编写一个小脚本，当最新的数据到来时就执行它（也可以设置一个周期性的任务，在一定的时间间隔自动运行该脚本）。如果你需要在多台机器上安装数据集，那么实现获取数据过程的自动化也非常有用。
+
+下面是取数据的函数（在一个真实的项目中，你需要将代码保存在Python文件中，但现在你可以写在Jupyter notebook中）：
+
+```python
+import os
+import tarfile
+from six.moves import urllib
+
+DOWNLOAD_ROOT = "https://raw.githubusercontent.com/ageron/handson-ml/master/"
+HOUSING_PATH = "datasets/housing"
+HOUSING_URL = DOWNLOAD_ROOT + HOUSING_PATH + "/housing.tgz"
+
+def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
+    if not os.path.isdir(housing_path):
+        os.makedirs(housing_path)
+    tgz_path = os.path.join(housing_path, "housing.tgz")
+    urllib.request.urlretrieve(housing_url, tgz_path)
+    housing_tgz = tarfile.open(tgz_path)
+    housing_tgz.extractall(path=housing_path)
+    housing_tgz.close()
+
+fetch_housing_data()
+```
+现在，你调用 `fetch_housing_data()`，它将在你的工作目录创建一个 数据集/房屋 目录，下载 *housing.tgz* 文件，提取其中的 *housing.csv* 到该目录中。
+
+现在，让我们用Pandas加载数据。你还是应该写一个小函数来载入数据：
+
+```python
+import pandas as pd
+def load_housing_data(housing_path=HOUSING_PATH):
+    csv_path = os.path.join(housing_path, "housing.csv")
+    return pd.read_csv(csv_path)
+```
+该函数返回一个包含了所有数据的 Pandas DataFrame 类型对象。
+
+#### 查看返回的数据结果
+
+让我们通过 DataFrame 的 `head()` 方法看看数据的前5行（见图 2-5）：
+
+![figure2-5](./asset/figure2-5.png)
+*图 2-5 数据集中的前 5 行*
+
+每行表示一个区，一共有10个属性（在截图中你可以看到前面6个）：longitude、latitude、housing_median_age、total_rooms、total_bedrooms、population、households、median_income、median_house_value 和 ocean_proximity。
 
 # 附录A 练习的答案
 
