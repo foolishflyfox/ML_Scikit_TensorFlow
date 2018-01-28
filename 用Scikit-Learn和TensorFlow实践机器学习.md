@@ -956,6 +956,166 @@ def load_housing_data(housing_path=HOUSING_PATH):
 
 每行表示一个区，一共有10个属性（在截图中你可以看到前面6个）：longitude、latitude、housing_median_age、total_rooms、total_bedrooms、population、households、median_income、median_house_value 和 ocean_proximity。
 
+函数 `info()` 方法对于显示数据的信息非常有用，特别是数据的总行数，每个属性的类型以及非null值的数目（见图 2-6）。
+
+![figure 2-6](./asset/figure2_6.png)
+*图 2-6 房屋信息*
+
+数据集中共有20640个实例，以机器学习的标准来衡量，这些数据量非常小，但很适合与初学者上手。注意到 **total_bedrooms** 属性只有20433个非null值，这意味着有207个区没有这个属性。这一点我们稍后处理。
+
+除 **ocean_proximity** 之外所有的属性都是数值型的，**ocean_proximity** 是一个对象类型，所以该属性能够容纳Python的任何对象，因为你是从csv中加载的数据，你知道它必然是一个文本对象。当你看最前面的5行时，你应该会注意到列中存在许多相同的值，这意味着可能可以将属性进行分类。你能通过 `value_counts()` 方法找出这些存在的类，并统计出每个类分别包含了多少个区。
+![value_counts](./asset/20180128100007.png)
+
+让我们看看其他的属性。`describe()` 方法显示了数值型属性的概要（图 2-7所示）。
+![figure 2-7](./asset/figure2_7.png)
+*图 2-7 各种数值型属性的概要信息*
+
+其中的 `count`、`mean`、`min` 和 `max` 行都很好理解。注意，null被忽略（所以，在上例中，`total_bedrooms` 的`count` 是20433，而不是20640）。`std` 行表示标准差（用于测量值得分散程度）。`25%`、`50%` 和 `75%` 这3行显示的是对应的百分位数：一个百分位数表示在观测数据中，小于该数的数据的百分比为指定的百分比。例如：就表中的 `housing_median_age` 而言，25%的百分位数为18，表示有25%的 `housing_median_age` 属性值小于18；同理，有50%的属性值小于29，有75%的属性值小于37。通常被称之为 第25百分位数(或第一个四分位数)，中位数，第75百分位数（或第3个四分位数）。
+
+另一种对你的数据处理的数据产生直观印象的方式是为每一个数值型属性绘制柱状图。一个柱状图，纵坐标是实例的数量，横坐标是属性的取值范围。你可以每次绘制一个属性的柱状图，也可以调用 `hist()` 函数一次性绘制所有数值属性的柱状图（见图 2-8）。例如，你可以看到，超过1000个区的 `median_house_value` 的属性值等于500000美元左右。
+
+```python
+import matplotlib.pyplot as plt
+housing.hist(bins=40, figsize=(20,15))
+```
+![figure 2-8](./asset/figure2_8.png)
+*图 2-8 每个数值型属性的柱状图*
+
+> `hist()` 方法依赖于 Matplotlib，Matplotlib依赖于用户指定的用于显示的图形化后台。
+
+注意在这些柱状图中的一些东西：
+1. 首先，中位收入属性貌似不是以美元为单位的。询问了复杂数据收集的团队，他们告诉你数据进行了缩放，15（实际上是15.0001）为中位收入的上限，0.5（实际上是0.4999）为中位收入的下限。在机器学习中，对属性进行预处理非常常见，这没有任何问题，但是你应该了解数据是如何预处理的。
+1. 房子的年龄及房子的价值也被设置了上限。因为后者是你要预测的目标，所以进行缩放可能会存在问题。你的机器学习算法所预测的价格也许永远不会突破这个上限。你需要跟你的客户团队（需要使用你的系统输出的团队）确认这到底是不是一个问题。如果他们告诉你他们需要精确的预测结果，结果可能会超过500,000美元，那么你有两个选择：
+    - 收集那些被限制了中位价格上限的区真实的中位价格。
+    - 从训练集中移除被中位价格上限所影响的那些区（对测试集也做同样的处理，因为如果对测试集做预测时，输出的中位价格大于500,000美金，不应该被认为性能差）
+1. 这些属性有不同的缩放比。关于缩放比，我们将在本章的后续内容中进行讨论。
+1. 最后，从图中可以看出许多的柱状图有 *尾重* 的情况：大部分的实例都集中在横轴的左边，右边的实例非常稀疏。这对于一些机器学习算法发现其中的模式产生了一些困难。我们将在之后讲解如何转化这些属性，使其分布呈钟形。
+
+希望你已经对你所处理的数据有了更好的理解。
+
+![waring](./asset/warning.png)
+注意，在你进一步使用这些数据之前，你需要先从中选出一些数据作为测试集，将它放在一边不要使用。
+
+#### 创建测试集
+
+你也许会奇怪为什么这个阶段就要将一部分数据划分出来作为测试集。毕竟，到目前为止你仅仅是粗略的看了这些数据几眼，并认为在选定使用何种算法之前，应该对数据整体再深入了解一下，对吗？的确，但是，人脑是一个神奇的模式识别系统，也就是说这非常容易造成过拟合：如果你看了测试集，你也许会偶然发现在其中存在一些看起来非常有趣的模式，这会导致你选择一个特别的机器学习模型。在你使用测试集评估泛化误差时，你的评估将会过于乐观，在将你的系统加载到生产环境中之后，你会发现系统的性能并不像评估的那么好。这称为 **数据窥探** 偏差。
+
+创建测试集的原理非常简单：随机选出一些实例，通常是数据集的20%，把它们晾在一边：
+```python
+import numpy as np
+
+def split_train_test(data, test_ratio):
+    shuffled_indices = np.random.permutation(len(data))
+    test_set_size = int(len(data) * test_ratio)
+    test_indices = shuffled_indices[:test_set_size]
+    train_indices = shuffled_indices[test_set_size:]
+    return data.iloc[train_indices], data.iloc[test_indices]
+```
+之后，你可以使用该函数：
+```python
+train_set, test_set = split_train_test(housing, 0.2)
+print(len(train_set),"train +", len(test_set), "test")
+```
+打印结果为：16512 train + 4128 test
+
+这样，测试集就选好了；但这样做并不是最好的：如果你下次运行这段代码，它将产生不同的测试集！随着运行次数的增加，你（或者说你的机器学习算法）将会得到整个数据集，这是你极力想避免的。
+
+一种方法是：在第一次运行该函数时，将测试集保存下来，之后再运行该函数，都返回保存了的数据。另一种选择是在调用`np.random.permutation()`之前，先设置随机数据生成器的种子（例如：`np.random.seed(42)`），那么它将总是产生相同的随机数组。
+
+> 你将会经常看到人们将随机种子设置为42，这个数字并没有什么特殊的特性，只是在《银河漫游指南》中设置为关于生命、宇宙、和任何事情终极问题的答案。另外有人说 42 是 \* 的 ascii 码，表示任何东西。对 42 问题不要太纠结。
+
+但是，当更新的数据到来时，上面介绍的两种方法都不适用了。一个通用的方法是根据实例的ID号来决定以何种方式获取测试集（假定实例有唯一不变的ID号）。比如说，你可以根据每个实例的ID号来计算一个哈希值，取哈希值的最低字节，只有该字节值小于等于51（256*20%≈51）时，将该实例放入测试集中。这保证了经过多次运行，测试集中的数据仍然是一致的，即使加入了新数据也保持一致。新的测试集中将会吸纳 20% 的新实例，但它将不包含如何之前在训练集中的数据。下面是这种思路的一种实现：
+```python
+import hashlib
+def test_set_check(identifier, test_ratio, hash):
+    return hash(np.int64(identifier)).digest()[-1] < 256 * test_ratio
+
+def split_train_test_by_id(data, test_ratio, id_column, hash=hashlib.md5):
+    ids = data[id_column]
+    in_test_set = ids.apply(lambda id_: test_set_check(id_, test_ratio, hash))
+    return data.loc[~in_test_set], data.loc[in_test_set]
+```
+但是，在房子的数据集中并没有ID这一列。最简单的解决方法是将行索引设置为其ID：
+```python
+housing_with_id = housing.reset_index()
+train_set, test_set = split_train_test_by_id(housing_with_id, 0.2, "index")
+```
+
+如果你用行索引作为唯一的ID号，你需要确定新数据是被追加到数据集的最后面，并且没有实例被删除。如果这不能做到，你可以选择最稳定的特征建立ID，例如一个区的经纬度信息一定是稳定不变的，因此你可以将它们结合在一起变为一个ID：
+```python
+housing_with_id['id'] = housing['longitude']*1000+housing["latitude"]
+train_set, test_set = split_train_test_by_id(housing_with_id, 0.2, "id")
+```
+> 使用位置信息进行分割的方法实际上不好，很多的区会得到相同的ID，因此它们必然是被分到同一个集中的（测试集或训练集）。这将引入一些采样误差。
+
+
+Scikit-Learn 也提供了多种将数据集切分成每个子集的方法。最简单的方式是 `train_test_split`，该函数与我们之前定义函数 `split_train_test` 非常相似，只是增加了几个特性。首先，参数 `random_state` 参数让你可以设置随机数生成器的种子，和我们之前提到的扩展方式系统；其次，你可以将多个行数相同的数据集传递给该函数，它将这些数据集进行切分，相同索引对应的实例放在相同位置（这一点非常重要，比如说你可以将labels独立开来）：
+```python
+from sklearn.model_selection import train_test_split
+train_set,test_set = train_test_split(housing,test_size=0.2,random_state=42)
+```
+
+到目前为止，我们已经考虑了纯随机地采样方式进行数据集划分。如果数据集足够大（相对于与属性的数量），这通常是比较好的，但如果数据量不大，这种方式可能会引入明显的采样偏差。如果一个调查公司决定找1000个人，问他们一些问题，他们不会以打电话的方式随机查询1000个人。他们必须保证这1000个人可以代表所有的人。例如，美国的人口比率是51.3%的女性，48.7%的男性，因此，在采样过程中要尽量保证该比例：513个女性和487个男性。这称为 *分层采样* ： 总人口被按照某个特性分成多个子组，称为 *层*，从每个层中采样正确的实例数，保证测试集能够代表所有人口。如果完全随机采样，将会有12%的几率采集“歪曲”的数据：女性的比率少于 49% 或多于 54% ，不管是哪种情况，采样结果都产生了明显的偏差。
+
+假设，一个专家告诉你中位收入对预测中位房价非常重要，你应该确保测试集中不同类别收入的实例比例和整个数据集相一致。因为中位收入是一个连续的数值型属性，你想要将其分为多个类。让我们仔细看看中等收入柱状图（见 图2-9）：
+![figure2-9](./asset/figure2_9.png)
+*图 2-9 收入分类柱状图*
+
+大多数的中位收入值集中在 2-5 之间（数万美元左右），但有的中位收入远大于6。在你的数据集中，各个层都有足够数量的实例这一点非常重要,否则你的估计就会产生偏差。这意味着，你不一定将数据分成太多层，但必须保证每个层的数据足够。下面的代码通过将中位收入除以1.5后向上取整（得到离散的类），之后将所有大于5的类归入到5：
+```python
+housing['income_cat'] = np.ceil(housing['median_income'] / 1.5)
+housing['income_cat'].where(housing['income_cat']<5, 5.0, inplace=True)
+```
+
+现在，你可以基于收入的类对采样集进行分层了。你可以通过 Scikit-Learn 的 `StratifiedShuffleSplit` 类完成：
+```python
+from sklearn.model_selection import StratifiedShuffleSplit
+# n_splits 指定需要划分的次数，实现多次迭代
+split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+for train_index, test_index in split.split(housing, housing['income_cat']):
+    strat_train_set = housing.loc[train_index]
+    strat_test_set = housing.loc[test_index]
+```
+让我们看看是否按照预计的正常工作。你可以先看看各个收入类在整个数据集中的比例：
+```python
+housing['income_cat'].value_counts()/len(housing)
+```
+输出为：
+```
+3.0    0.350581
+2.0    0.318847
+4.0    0.176308
+5.0    0.114438
+1.0    0.039826
+Name: income_cat, dtype: float64
+```
+你可以使用相同的方法计算收入类在测试集中所占的比例：
+```python
+strat_test_set['income_cat'].value_counts()/len(strat_test_set)
+```
+输出为
+```
+3.0    0.350533
+2.0    0.318798
+4.0    0.176357
+5.0    0.114583
+1.0    0.039729
+Name: income_cat, dtype: float64
+```
+可以发现比例非常相近。
+
+图2-10 比较了各收入类在整个数据集中的比例，在用随机采样方法得到的测试集中的比例，在用分层采样方法得到的测试集中的比例。正如你所见，用分层采样方法得到的测试集中各收入类的比例几乎等于他们在整个数据集中的比例，而随机采样的方法就显得差很多：
+![figure2-10](./asset/figure2_10.png)
+*图 2-10. 随机采样和分层采样的采样偏差对比*
+
+现在，你应当删除 `income_cat` 这一属性，恢复到它原来的状态：
+```python
+for set_ in (strat_test_set, strat_train_set):
+    set_.drop(['income_cat'], axis=1, inplace=True)
+```
+
+我们花费了许多时间讲解获取测试集的过程，因为这个过程经常被忽略，但却非常重要。而且，许多的想法对之后我们讨论交叉验证也非常有用。现在，可以进入到下一个阶段了：数据的探索。
+
 # 附录A 练习的答案
 
 <h2 id="Chapter1Answer">第一章 机器学习纵览</h2>
