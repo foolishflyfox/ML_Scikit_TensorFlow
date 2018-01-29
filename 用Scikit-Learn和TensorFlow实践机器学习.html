@@ -308,6 +308,18 @@ code.language-yaml {
 <li><a href="#%E5%88%9B%E5%BB%BA%E6%B5%8B%E8%AF%95%E9%9B%86">创建测试集</a></li>
 </ul>
 </li>
+<li><a href="#%E5%8F%91%E7%8E%B0%E5%B9%B6%E5%8F%AF%E8%A7%86%E5%8C%96%E6%95%B0%E6%8D%AE%E4%BB%A5%E8%8E%B7%E5%BE%97%E6%B4%9E%E5%AF%9F">发现并可视化数据以获得洞察</a></li>
+<li><a href="#%E5%9C%B0%E7%90%86%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96">地理数据可视化</a>
+<ul>
+<li><a href="#%E5%AF%BB%E6%89%BE%E7%9B%B8%E5%85%B3%E6%80%A7">寻找相关性</a></li>
+<li><a href="#%E5%B0%9D%E8%AF%95%E5%B1%9E%E6%80%A7%E7%9A%84%E8%81%94%E5%90%88">尝试属性的联合</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%BA%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AE%97%E6%B3%95%E5%87%86%E5%A4%87%E6%95%B0%E6%8D%AE">为机器学习算法准备数据</a>
+<ul>
+<li><a href="#%E6%95%B0%E6%8D%AE%E6%B8%85%E7%90%86">数据清理</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -532,8 +544,7 @@ code.language-yaml {
 <blockquote>
 <p>一个有趣事实是，<em>回归</em> 这个奇怪的名字原本是统计学的一个术语，最开始是Francis Galton 在研究孩子身高时引入，他发现如果一个孩子的父母都是高个子，孩子趋向于比他的父母都要矮，所以他称这种现象为 <em>回归于平均水平</em>。这个名词后来被他用于分析两个相关变量关系的方法中。</p>
 </blockquote>
-<p><img src="./asset/note.png" alt="Alt text"><br>
-在机器学习中，一个 <em>属性</em> 通常是指一种类型的数据（例如里程数），而 <em>特征</em> 需要根据上下文来确定其具体的含义，但通常来说是指一个属性和它的值（例如：“里程数=15,000”）。也有很多人将 <em>属性</em> 和 <em>特征</em> 混用。</p>
+<p><img src="./asset/note.png" alt="Alt text">在机器学习中，一个 <em>属性</em> 通常是指一种类型的数据（例如里程数），而 <em>特征</em> 需要根据上下文来确定其具体的含义，但通常来说是指一个属性和它的值（例如：“里程数=15,000”）。也有很多人将 <em>属性</em> 和 <em>特征</em> 混用。</p>
 <p>**注意：**有的回归算法也会被用于分类，反之亦然。比如说，逻辑回归算法就是一种常见的将回归应用于分类的算法，其输出值为属于相应类的概率大小（例如：20%的可能是垃圾邮件）。</p>
 <p>下面是一些最重要的监督学习算法（本书中涵盖的）：</p>
 <ul>
@@ -629,8 +640,7 @@ code.language-yaml {
 <p>当训练数据量非常大时，也许我们设备的存储空间不能容纳下全部的训练数据，那么我们也可以使用在线学习算法（这也称为 <em>核外学习</em>）。算法只将部分的数据进行加载，先针对这些数据进行训练，之后重复这一过程，直到所有的数据都被训练过（见图 1-14）。</p>
 <p><img src="./asset/1516713013659.png" alt="Alt text"><br>
 <em>图 1-14 以在线学习的方式处理超大的数据集</em></p>
-<p><img src="./asset/warning.png" alt="Alt text"><br>
-<strong>特别注意：上述的所有过程通常是离线进行的（系统并不处于运行状态），所以 <em>在线学习</em> 这个名字总感觉令人困惑，你就认为它是 <em>增量式学习</em> 好了。</strong></p>
+<p><img src="./asset/warning.png" alt="Alt text"><strong>特别注意：上述的所有过程通常是离线进行的（系统并不处于运行状态），所以 <em>在线学习</em> 这个名字总感觉令人困惑，你就认为它是 <em>增量式学习</em> 好了。</strong></p>
 <p>在线学习系统中一个重要的参数是，在线学习应该以多快来适应新数据：这称为学习速率。如果你设置了一个高学习率，你的系统将能够快速适应新数据，但它也将很快 “忘记” 旧数据（你应该不会想要一个只能将与最新接收到的邮件类型相同的邮件标注出来的系统吧）。相反地，如果你设置了一个低学习率，系统将有更大的惯性，也就是说：它学得更慢，但同时对新数据中的噪声、非典型的数据点序列不敏感。</p>
 <p>在线学习的一大挑战是：如果坏的数据被输入到系统中，系统的性能将会渐渐地下降。如果是在线运行的系统，这种变化将会被你的客户注意到。坏的数据可能来自于机器人上出故障的传感器，或者是某人对搜索引擎进行狂轰滥炸地输入某个搜索词以提高该词在搜索结果中的排名。为了减少这些风险，你需要密切监视你的系统，在你发现系统的性能下降时及时停止学习（如果可能的话，最好将系统回退到之前的某个工作状态）。你最好也能够对输入数据进行监视，剔除其中的异常数据（例如使用异常检测算法）。</p>
 <h3 class="mume-header" id="%E5%9F%BA%E4%BA%8E%E5%AE%9E%E4%BE%8B-vs-%E5%9F%BA%E4%BA%8E%E6%A8%A1%E5%9E%8B">基于实例 VS 基于模型</h3>
@@ -704,8 +714,7 @@ clf<span class="token punctuation">.</span>fit<span class="token punctuation">(<
 X_new <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">22587</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token comment" spellcheck="true"># 塞浦路斯的人均GDP</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span>clf<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>X_new<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 输出为 [[ 5.96242338]]</span>
 </pre>
-<p><img src="./asset/note.png" alt="Alt text"><br>
-如果你使用基于实例的学习算法就会发现，斯洛文尼亚和塞浦路斯的人均GDP最接近，而斯洛文尼亚在OECD上显示的生活幸福指数是5.7，因此，你的算法也许会预测塞浦路斯的生活幸福指数也是5.7。如果你把观察的范围扩大到最接近的3个国家，你将发现葡萄牙和西班牙的幸福指数分别为5.1 和 6.5。求这3个国家的幸福指数的平均值，可以得到5.77，已经非常接近使用基于模型算法得到的预测值。这种简单的算法被称为 <em>k-近邻</em> 回归（在这个例子中，k=3）。<br>
+<p><img src="./asset/note.png" alt="Alt text">如果你使用基于实例的学习算法就会发现，斯洛文尼亚和塞浦路斯的人均GDP最接近，而斯洛文尼亚在OECD上显示的生活幸福指数是5.7，因此，你的算法也许会预测塞浦路斯的生活幸福指数也是5.7。如果你把观察的范围扩大到最接近的3个国家，你将发现葡萄牙和西班牙的幸福指数分别为5.1 和 6.5。求这3个国家的幸福指数的平均值，可以得到5.77，已经非常接近使用基于模型算法得到的预测值。这种简单的算法被称为 <em>k-近邻</em> 回归（在这个例子中，k=3）。<br>
 如果用k-近邻实现代码也非常简单，只需要将之前的代码：<br>
 <code>clf = linear_model.LinearRegression()</code><br>
 替换为：<br>
@@ -893,8 +902,7 @@ X_new <span class="token operator">=</span> <span class="token punctuation">[</s
 
 <p>欢迎来到机器学习房地产公司！你的第一个任务是利用加利福尼亚房屋价格的统计数据建立一个适用于加利福尼亚的房屋价格模型。信息来自于美国统计局所公布的数据，包括加利福尼亚每个街区组的人口、中等收入、中位房价格等（通常来说，一个街区组有600~3000的人口）。之后我们把街区组简称为区。</p>
 <p>你的模型应当能够从这些数据中进行学习，并最终能够通过给定的测量值预测任何一个地区中位房的价格。</p>
-<p><img src="./asset/suggest.png" alt="suggest"><br>
-作为一个有职业素养的数据科学家，你首先要给出机器学习项目的<a href="#201801261106">工作清单</a>。依据这个清单，绝大多数的机器学习项目应该能够完成的比较理想，但要注意一定要根据你的实际情况进行。在本章，我们将完成多个清单中的项目，但我们也会跳过一些，有的是因为它们的结论不证自明，有的是留到之后的章节进行讨论。</p>
+<p><img src="./asset/suggest.png" alt="suggest">作为一个有职业素养的数据科学家，你首先要给出机器学习项目的<a href="#201801261106">工作清单</a>。依据这个清单，绝大多数的机器学习项目应该能够完成的比较理想，但要注意一定要根据你的实际情况进行。在本章，我们将完成多个清单中的项目，但我们也会跳过一些，有的是因为它们的结论不证自明，有的是留到之后的章节进行讨论。</p>
 <h4 class="mume-header" id="%E6%9E%84%E9%80%A0%E9%97%AE%E9%A2%98">构造问题</h4>
 
 <p>首先，你需要咨询你的老板准确的商业目的；建立一个模型可能并非是终止的目标。公司打算如何从这个模型中获利？这一点非常重要，因为它决定了你应该如何够着问题，你应该选择什么算法，你应该用什么方法进行性能评估，你需要花多少努力来调整它？</p>
@@ -910,8 +918,7 @@ X_new <span class="token operator">=</span> <span class="token punctuation">[</s
 <p>之后需要询问的问题是：当前的解决方案是什么（如果有的话）。这经常能作为你的一个参考，也能对如何解决这个问题有一定的启示。你的老板说，目前各个区的房价主要通过几个专家人工计算：这个专家组获得关于一个区的最新信息（不包括中位房价），之后，他们通过复杂的公式得到一个估算结果。这个过程非常昂贵，也很费时，他们的估算结果并不是很理想；他们的错误率在15%左右。</p>
 <p>好了，有了这些信息，你就可以准备开始设计你的系统了。首先，你需要构造这个问题：是监督学习，非监督学习，还是增强学习？是分类问题，回归问题，还是其他的？使用批量学习还是在线学习？在你继续往下看之前，先暂停下来好好想一想。</p>
 <p>你有答案了吗？让我们看一看你的答案是否正确：它显然是典型的监督学习任务，因为给了你训练标记（每个实例有一个期望的输出，比如：区的中位房价）。它也是一个典型的回归任务，因为需要你回答的是一个数值，更进一步，这是一个多变量的回归问题，因为系统使用了多个特征来做预测（它将使用区的人口，中等收入等特征）。在第一章中，你预测生活幸福指数时，只使用了一个变量——人均GDP，所以它是一个单变量回归问题。最后，该问题不会有源源不断的数据流到来，所以没必要快速适应变化的数据，并且数据量也非常小，内存能够全部加载，所以使用简单的批量学习算法就可以了。</p>
-<p><img src="./asset/suggest.png" alt="suggest"><br>
-如果数据量非常大，你既可以将批量学习任务分割到多个服务器上进行（使用MapReduce技术，我们之后会看到），也可以使用在线学习技术进行替代。</p>
+<p><img src="./asset/suggest.png" alt="suggest">如果数据量非常大，你既可以将批量学习任务分割到多个服务器上进行（使用MapReduce技术，我们之后会看到），也可以使用在线学习技术进行替代。</p>
 <h4 class="mume-header" id="%E9%80%89%E6%8B%A9%E4%B8%80%E4%B8%AA%E6%80%A7%E8%83%BD%E6%B5%8B%E9%87%8F">选择一个性能测量</h4>
 
 <p>你接下来的任务是选择一个性能测量。对于回归问题，最典型的性能测量方式是 <strong>均方根差(Root Mean Square Error, RMSE)</strong>。它计算的是系统预测值与实际值之差的标准差（标准差常用<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base"><span class="mord mathit" style="margin-right:0.03588em;">σ</span></span></span></span>表示，方差开根号得到）。比如说，RMSE等于50000表示大约68%的系统预测值和实际值之差不超过$50000，95%的预测值和实际值之差不超过$100000。</p>
@@ -1116,8 +1123,7 @@ housing<span class="token punctuation">.</span>hist<span class="token punctuatio
 <li>最后，从图中可以看出许多的柱状图有 <em>尾重</em> 的情况：大部分的实例都集中在横轴的左边，右边的实例非常稀疏。这对于一些机器学习算法发现其中的模式产生了一些困难。我们将在之后讲解如何转化这些属性，使其分布呈钟形。</li>
 </ol>
 <p>希望你已经对你所处理的数据有了更好的理解。</p>
-<p><img src="./asset/warning.png" alt="waring"><br>
-注意，在你进一步使用这些数据之前，你需要先从中选出一些数据作为测试集，将它放在一边不要使用。</p>
+<p><img src="./asset/warning.png" alt="waring">注意，在你进一步使用这些数据之前，你需要先从中选出一些数据作为测试集，将它放在一边不要使用。</p>
 <h4 class="mume-header" id="%E5%88%9B%E5%BB%BA%E6%B5%8B%E8%AF%95%E9%9B%86">创建测试集</h4>
 
 <p>你也许会奇怪为什么这个阶段就要将一部分数据划分出来作为测试集。毕竟，到目前为止你仅仅是粗略的看了这些数据几眼，并认为在选定使用何种算法之前，应该对数据整体再深入了解一下，对吗？的确，但是，人脑是一个神奇的模式识别系统，也就是说这非常容易造成过拟合：如果你看了测试集，你也许会偶然发现在其中存在一些看起来非常有趣的模式，这会导致你选择一个特别的机器学习模型。在你使用测试集评估泛化误差时，你的评估将会过于乐观，在将你的系统加载到生产环境中之后，你会发现系统的性能并不像评估的那么好。这称为 <strong>数据窥探</strong> 偏差。</p>
@@ -1213,6 +1219,186 @@ Name: income_cat, dtype: float64
     set_<span class="token punctuation">.</span>drop<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'income_cat'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> inplace<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
 </pre>
 <p>我们花费了许多时间讲解获取测试集的过程，因为这个过程经常被忽略，但却非常重要。而且，许多的想法对之后我们讨论交叉验证也非常有用。现在，可以进入到下一个阶段了：数据的探索。</p>
+<h3 class="mume-header" id="%E5%8F%91%E7%8E%B0%E5%B9%B6%E5%8F%AF%E8%A7%86%E5%8C%96%E6%95%B0%E6%8D%AE%E4%BB%A5%E8%8E%B7%E5%BE%97%E6%B4%9E%E5%AF%9F">发现并可视化数据以获得洞察</h3>
+
+<p>目前为止，你只是对你所要处理的数据进行了快速查看，对它们有了一般的了解。现在的目标是再进一步，了解得更深一点。</p>
+<p>首先，确保你已经将测试集取出放在一边，你只会拿训练集进行探索。另外，如果训练集非常大的话，你可能需要简化被探索的数据，使操作过程更加简短快速。在我们这个例子中，因为数据集本来就小，所以你能直接在整个数据集上工作。先将训练集进行拷贝，这个阶段我们所有的操作都训练集的一个拷贝上进行：</p>
+<pre class="language-python">housing <span class="token operator">=</span> strat_train_set<span class="token punctuation">.</span>copy<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</pre>
+<h3 class="mume-header" id="%E5%9C%B0%E7%90%86%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96">地理数据可视化</h3>
+
+<p>因为存在地理信息（纬度和经度），我们可以为所有区创建一个散点图以可视化地理数据（图 2-11）：</p>
+<pre class="language-python">housing<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>kind<span class="token operator">=</span><span class="token string">"scatter"</span><span class="token punctuation">,</span> x<span class="token operator">=</span><span class="token string">"longitude"</span><span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token string">"latitude"</span><span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/figure2_11.png" alt="figure2-11"><br>
+<em>图 2-11 数据地理信息散点图</em></p>
+<p>这个图看起来就像加利福尼亚州的形状，但除此之外，我们不能看出其他的规律。设置透明度参数<code>alpha</code>为0.1，能够更好的看清楚数据点的分布密度情况（图 2-12）：</p>
+<pre class="language-python">housing<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>kind<span class="token operator">=</span><span class="token string">"scatter"</span><span class="token punctuation">,</span> x<span class="token operator">=</span><span class="token string">"longitude"</span><span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token string">"latitude"</span><span class="token punctuation">,</span> alpha<span class="token operator">=</span><span class="token number">0.1</span><span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/figure2_12.png" alt="figure 2-12"><br>
+<em>图 2-12 高密度地区颜色更深，可视化的效果更好</em></p>
+<p>现在比刚才好很多了：你可以清晰地看出那些高密度的地区，即湾区、洛杉矶 和 圣地亚哥 附近、再加上中央谷地沿线，特别是 萨克拉门托 和 弗雷斯诺 附近。</p>
+<p>现在让我们看看房子的价格（图 2-13）。每个圆的半径代表区的人口（用参数<code>s</code>设置），颜色代表了价格（用参数<code>c</code>设置）。我们使用预定义的称为<code>jet</code>的色图(参数<code>cmap</code>设置)来提供颜色，<code>jet</code>的颜色从蓝（最小值）到红（最高价格）：</p>
+<pre class="language-python">housing<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>kind<span class="token operator">=</span><span class="token string">"scatter"</span><span class="token punctuation">,</span> x<span class="token operator">=</span><span class="token string">"longitude"</span><span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token string">"latitude"</span><span class="token punctuation">,</span>
+            alpha<span class="token operator">=</span><span class="token number">0.4</span><span class="token punctuation">,</span> s<span class="token operator">=</span>housing<span class="token punctuation">[</span><span class="token string">'population'</span><span class="token punctuation">]</span><span class="token operator">/</span><span class="token number">100</span><span class="token punctuation">,</span>
+            label<span class="token operator">=</span><span class="token string">"population"</span><span class="token punctuation">,</span> c<span class="token operator">=</span><span class="token string">"median_house_value"</span><span class="token punctuation">,</span>
+            cmap<span class="token operator">=</span>plt<span class="token punctuation">.</span>get_cmap<span class="token punctuation">(</span><span class="token string">"jet"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> colorbar<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/figure2_13.png" alt="figure2-13"></p>
+<p>该图片告诉你正如你现在已知的，房子价格与其所在地理位置及人口密度非常相关。我们可以使用聚类算法发现主要的群，并添加新的特征用以表示群的中心。临近大海这一属性也非常有用，但是在加利福尼亚北部的海边房价并不是太高，所以并不是像想象中的越靠近海边房价越贵这么简单。</p>
+<h4 class="mume-header" id="%E5%AF%BB%E6%89%BE%E7%9B%B8%E5%85%B3%E6%80%A7">寻找相关性</h4>
+
+<p>因为数据集并不是很大，我们可以通过调用<code>corr()</code>函数，轻松计算出每一对属性之间的 <em>标准相关系数</em>（也称为 <em>皮尔逊积矩相关系数</em>）。</p>
+<pre class="language-python">corr_matrix <span class="token operator">=</span> housing<span class="token punctuation">.</span>corr<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</pre>
+<p>我们看一下各属性与中位房价的相关性是多少：</p>
+<pre class="language-python">corr_matrix<span class="token punctuation">[</span><span class="token string">'median_house_value'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>sort_values<span class="token punctuation">(</span>ascending<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+</pre>
+<p>输出为：</p>
+<pre class="language-">median_house_value    1.000000
+median_income         0.687160
+total_rooms           0.135097
+housing_median_age    0.114110
+households            0.064506
+total_bedrooms        0.047689
+population           -0.026920
+longitude            -0.047432
+latitude             -0.142724
+Name: median_house_value, dtype: float64
+</pre>
+<p>标准相关系数的范围从 -1 到 1。如果接近1，表示属性间存在强正相关的关系；例如，中位价格会随着中位收入的升高而上升。如果系数接近-1，表示属性间存在强负相关的关系；你能看到纬度(latitude)和中位价格之间存在较小的负相关（例如，越靠近北边，中位价格些许下降的趋势）。如果系数接近于0，表示属性间没有线性关系。图 2-14 显示了各种不同的分布之间的标准相关系数（横坐标和纵坐标作为两个属性值）：<br>
+<img src="./asset/figure2_14.png" alt="figure 2-14"><br>
+<em>图 2-14 多种数据分布的标准相关系数（来源：维基百科；公共领域图片；）</em></p>
+<p><img src="./asset/warning.png" alt="warning">该相关系数只计算属性间的线性关系（“如果 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base"><span class="mord mathit">x</span></span></span></span> 增大，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base"><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span> 一般说也同时增大/减小”）。它会完全忽略非线性的关系（例如：“如果 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base"><span class="mord mathit">x</span></span></span></span> 向 0 靠近时，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base"><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span> 的值会增大”）。注意到上图中的最后一行，输入标准相关系数等于0，但两个坐标之间显然不是独立的：它们是非线性关系的例子。注意到第二行中，相关系数是1或者-1，可见该值与斜率无关。例如，你的身高用英寸表示和用英尺或纳米表示，它们之间的相关系数都是1。</p>
+<p>另一种用于检测属性间相关性的方式是使用 Pandas 的 <code>scatter_matrix</code> 函数，它将绘制出所有数值型属性和其他数值型属性的散点图。我们现在有11个数值型属性，因此你将得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn><msup><mn>1</mn><mn>2</mn></msup><mo>=</mo><mn>1</mn><mn>2</mn><mn>1</mn></mrow><annotation encoding="application/x-tex">11^2=121</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.8141079999999999em;"></span><span class="strut bottom" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="base"><span class="mord mathrm">1</span><span class="mord"><span class="mord mathrm">1</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathrm mtight">2</span></span></span></span></span></span></span></span><span class="mrel">=</span><span class="mord mathrm">1</span><span class="mord mathrm">2</span><span class="mord mathrm">1</span></span></span></span> 幅图，这么多图在一页上放不下，因此，我们仅仅看几个最有可能与中位价格相关的属性（图 2-15）：</p>
+<pre class="language-python"><span class="token keyword">from</span> pandas<span class="token punctuation">.</span>plotting <span class="token keyword">import</span> scatter_matrix
+
+attributes <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">'median_house_value'</span><span class="token punctuation">,</span> <span class="token string">'median_income'</span><span class="token punctuation">,</span>
+             <span class="token string">'total_rooms'</span><span class="token punctuation">,</span> <span class="token string">'housing_median_age'</span><span class="token punctuation">]</span>
+scatter_matrix<span class="token punctuation">(</span>housing<span class="token punctuation">[</span>attributes<span class="token punctuation">]</span><span class="token punctuation">,</span> figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/figure2_15.png" alt="figure 2-15"></p>
+<p>主对角线上（左上角到右下角）本来应该绘制其自身与自身的散点图，应该是一条直线，这并没有什么用，因此 Pandas 绘制的是各个属性的统计结果（相当于调用<code>hist</code>所绘制的直方图）。</p>
+<p>用于预测中位价格最好的属性是中位收入，所以我们放大两者的关系散列图（图2-16）：</p>
+<pre class="language-python">housing<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>kind<span class="token operator">=</span><span class="token string">'scatter'</span><span class="token punctuation">,</span> x<span class="token operator">=</span><span class="token string">"median_income"</span><span class="token punctuation">,</span>
+             y<span class="token operator">=</span><span class="token string">"median_house_value"</span><span class="token punctuation">,</span> alpha<span class="token operator">=</span><span class="token number">0.2</span><span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/figure2_16.png" alt="figure 2-16"></p>
+<p>从该图中可以得到某些信息。首先，两者之间的相关性的确非常强，你可以清晰地看出点之间的上升趋势，并且他们之间并不是非常分散。其次，价格上限也非常明显，在500,000的位置有一条水平线。但该图也反映了其他一些并不是非常明显的直线：45000附近、35000附近、28000附近以及其他一些更小的，你可能需要在学习前先移除对应的这些区，防止你的算法在预测时复现这种数据上的巧合。</p>
+<h4 class="mume-header" id="%E5%B0%9D%E8%AF%95%E5%B1%9E%E6%80%A7%E7%9A%84%E8%81%94%E5%90%88">尝试属性的联合</h4>
+
+<p>希望前面的内容能够让你学到探索数据及获得某些洞察的一些方式。你发现一些数据的规律完全是偶然的，你希望在将数据送入到机器学习算法之前现将那些偶然数据清除；你也发现了属性之间的各种有趣的相关性，特别是与目标属性之间的相关性。你也发现了一些属性存在 <em>尾重</em> 分布的情况，所以你也许需要将他们进行变换（例如：通过将它们求对数）。当然，对于每个项目来说具体的实践步骤可能会不一样，但基本的思想是相似的。</p>
+<p>在为机器学习算法准备数据之前，你需要做的最后一件事是尝试将多种属性联合。比如说，如果你不知道在某个区有多少户家庭，那在该区的房间数量也就不是非常有用了。你真正需要的是平均每户家庭有多少房间。相似的，卧室总数本身并不是很重要：你需要和房间总数对比起来看。每户家庭的人口数也看起来比单独的人口数及家庭户数更加有用。让我们将这几个属性创建起来：</p>
+<pre class="language-python">housing<span class="token punctuation">[</span><span class="token string">'rooms_per_household'</span><span class="token punctuation">]</span> <span class="token operator">=</span> housing<span class="token punctuation">[</span><span class="token string">'total_rooms'</span><span class="token punctuation">]</span><span class="token operator">/</span>housing<span class="token punctuation">[</span><span class="token string">'households'</span><span class="token punctuation">]</span>
+housing<span class="token punctuation">[</span><span class="token string">'bedrooms_per_room'</span><span class="token punctuation">]</span> <span class="token operator">=</span> housing<span class="token punctuation">[</span><span class="token string">'total_bedrooms'</span><span class="token punctuation">]</span><span class="token operator">/</span>housing<span class="token punctuation">[</span><span class="token string">'total_rooms'</span><span class="token punctuation">]</span>
+housing<span class="token punctuation">[</span><span class="token string">'population_per_household'</span><span class="token punctuation">]</span><span class="token operator">=</span>housing<span class="token punctuation">[</span><span class="token string">'population'</span><span class="token punctuation">]</span><span class="token operator">/</span>housing<span class="token punctuation">[</span><span class="token string">'households'</span><span class="token punctuation">]</span>
+</pre>
+<p>现在，让我们再来看看相关性矩阵：</p>
+<pre class="language-python">corr_matrix <span class="token operator">=</span> housing<span class="token punctuation">.</span>corr<span class="token punctuation">(</span><span class="token punctuation">)</span>
+corr_matrix<span class="token punctuation">[</span><span class="token string">'median_house_value'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>sort_values<span class="token punctuation">(</span>ascending<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+</pre>
+<p>输出结果为：</p>
+<pre class="language-">median_house_value          1.000000
+median_income               0.687160
+rooms_per_household         0.146285
+total_rooms                 0.135097
+housing_median_age          0.114110
+households                  0.064506
+total_bedrooms              0.047689
+population_per_household   -0.021985
+population                 -0.026920
+longitude                  -0.047432
+latitude                   -0.142724
+bedrooms_per_room          -0.259984
+Name: median_house_value, dtype: float64
+</pre>
+<p>嗯，还不错。新属性 <code>bedrooms_per_room</code> 与中位房价的相关性要高于房子总数以及卧室总数。这也是可以理解的，一个房子的 <em>卧室数/房间数</em> 的比例越低，房子价格也就越贵。每户家庭拥有的房间数也比房间总数以及家庭户数有更多信息量，这也可以理解，毕竟房子越大，价格也越贵嘛。</p>
+<p>这一步的探索并非一定要做，关键是要在最开始的时候选择正确的方向，快速获得能够帮助你建立一个好原型的一些领悟。但这也是一个迭代的过程：在你得到一个原型并运行之后，你可以分析它的输出，在获得更多的领悟后，再回过头来重复这一探索的过程。</p>
+<h3 class="mume-header" id="%E4%B8%BA%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AE%97%E6%B3%95%E5%87%86%E5%A4%87%E6%95%B0%E6%8D%AE">为机器学习算法准备数据</h3>
+
+<p>到了为你的机器学习算法准备数据的时候了。你需要写一些函数来完成这一步而不是手动地去做，原因有以下几点：</p>
+<ul>
+<li>这将使你能够更简单地在任何数据集上复用这些变换（比如：下一次你得到新的数据集）；</li>
+<li>你会慢慢建立起一个数据变换库，供你在以后的项目中使用；</li>
+<li>你将这些函数用于正在运行的系统中，将新数据进行用这些函数处理后再传递给你的算法；</li>
+<li>使你能够更方便地尝试各种变换方式，选出效果最好的变换组合；</li>
+</ul>
+<p>首先，让我们将数据恢复成一个干净的训练集（通过再次复制 <code>strat_train_set</code>），，并将预测器（也就是用于预测标记属性组成的向量）和标记分开，因为我们不需要将相同的变换同时作用于预测器和标记（注意：<code>drop()</code> 函数创建了一个数据的拷贝，对<code>strat_train_set</code>没有影响）：</p>
+<pre class="language-python">housing <span class="token operator">=</span> strat_train_set<span class="token punctuation">.</span>drop<span class="token punctuation">(</span><span class="token string">'median_house_value'</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+housing_labels <span class="token operator">=</span> strat_train_set<span class="token punctuation">[</span><span class="token string">'median_house_value'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>copy<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</pre>
+<h4 class="mume-header" id="%E6%95%B0%E6%8D%AE%E6%B8%85%E7%90%86">数据清理</h4>
+
+<p>大多数的机器学习算法不能够在特征值缺失的情况下工作，因此我们需要编写一些函数来处理特征缺失的情况。你之前应该注意到，<code>total_bedrooms</code> 属性有一些缺失的值，所以我们需要进行修正。你有以下3种选择：</p>
+<ul>
+<li>将对应的区删除掉</li>
+<li>删除整个 <code>total_bedrooms</code> 属性</li>
+<li>将缺失的值设置为某些值（0，平均数，中位数 等）</li>
+</ul>
+<p>你可以调用 DataFrame 的 <code>dropna()</code>、<code>drop()</code> 和 <code>fillna()</code> 方法轻松完成：</p>
+<pre class="language-python">housing<span class="token punctuation">.</span>dropna<span class="token punctuation">(</span>subset<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'total_bedrooms'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>   <span class="token comment" spellcheck="true"># 选择1</span>
+housing<span class="token punctuation">.</span>drop<span class="token punctuation">(</span><span class="token string">'total_bedrooms'</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>      <span class="token comment" spellcheck="true"># 选择2</span>
+median <span class="token operator">=</span> housing<span class="token punctuation">[</span><span class="token string">'total_bedrooms'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>median<span class="token punctuation">(</span><span class="token punctuation">)</span>
+housing<span class="token punctuation">[</span><span class="token string">'total_bedrooms'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>fillna<span class="token punctuation">(</span>median<span class="token punctuation">)</span>    <span class="token comment" spellcheck="true"># 选择3</span>
+</pre>
+<p>如果你选择的是第3种方式，你应当先在训练集上计算中位数的值，并用该值填充训练集中缺失的值。但是也别忘了将你计算得到的中位数值保存下来。你将在之后需要评估你的系统时，使用它来替换测试集中的缺失值，还有在你的系统上线后也需要该值来替换新数据中的缺失值。</p>
+<p>Scikit-Learn 提供了一个方便的类用于处理缺失值：<code>Imputer</code>。下面是使用方法：首先，你需要创建一个 <code>Imputer</code> 实例，指定 <code>strategy</code>(策略) 参数为 <code>median</code>，表示希望用中位数来替换每个属性中的缺失值：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>preprocessing <span class="token keyword">import</span> Imputer
+imputer <span class="token operator">=</span> Imputer<span class="token punctuation">(</span>strategy<span class="token operator">=</span><span class="token string">"median"</span><span class="token punctuation">)</span>
+</pre>
+<p>因为只有数值型的属性才存在中位数，我们需要创建一个取出了文本属性 <code>ocean_proximity</code> 之后的拷贝：</p>
+<pre class="language-python">housing_num <span class="token operator">=</span> housing<span class="token punctuation">.</span>drop<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'ocean_proximity'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+</pre>
+<p>现在你可以将之前创建的 <code>imputer</code> 实例通过<code>fit</code>函数使之适应于训练集（注意：这一步并没有对训练集改变）：</p>
+<pre class="language-python">imputer<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>housing_num<span class="token punctuation">)</span>
+</pre>
+<p><code>imputer</code> 实例简单地计算了各个属性的中位数，并将结果存放在实例的 <code>statistics_</code> 变量中。只有 <code>total_bedrooms</code> 属性存在缺失值，但是我们不能确定在系统上线后到来的新数据是否会存在缺失值，为了保险起见，我们最好将 <code>imputer</code> 实例作用于所有的数值型属性：</p>
+<pre class="language-">&gt;&gt;&gt; imputer.statistics_
+array([ -118.51 , 34.26 , 29. , 2119.5 , 433. ,
+        1164. , 408. , 3.5409])
+
+&gt;&gt;&gt; housing_num.median().values
+array([ -118.51 , 34.26 , 29. , 2119.5 , 433. ,
+        1164. , 408. , 3.5409])
+</pre>
+<p>现在你可以用 “训练好的” <code>imputer</code> 转换训练集——将缺失值用学到的中位值替换：</p>
+<pre class="language-python">X <span class="token operator">=</span> imputer<span class="token punctuation">.</span>transform<span class="token punctuation">(</span>housing_num<span class="token punctuation">)</span>
+</pre>
+<p>得到的结果<code>X</code>是一个包含转换后属性值的纯的 Numpy 数组，如果你想把它包装成一个Pandas DataFrame类型，非常简单：</p>
+<pre class="language-python">housing_tr <span class="token operator">=</span> pd<span class="token punctuation">.</span>DataFrame<span class="token punctuation">(</span>X<span class="token punctuation">,</span> columns<span class="token operator">=</span>housing_num<span class="token punctuation">.</span>columns<span class="token punctuation">)</span>
+</pre>
+<hr>
+<p><strong>Scikit-Learn 设计</strong></p>
+<p>Scikit-Learn 的API设计得非常棒。<a href="https://arxiv.org/pdf/1309.0238v1.pdf">主要的设计原则</a>是：</p>
+<ul>
+<li>
+<p>一致性。所有的对象共享一致的、简单的接口：</p>
+<ul>
+<li>
+<p>评价器( <strong>estimators</strong> )：如何能够基于数据集进行参数评估的对象都称为评价器（例如，<code>imputer</code> 就是一个评价器）。评价过程通过评价器的 <code>fit()</code> 方法进行，该方法有唯一的参数（对于监督学习来说是两个，第二个参数是标记数据集）。任何需要指导评价器工作的参数称为超参数（比如<code>imputer</code>中的strategy），这些参数必须设置为实例的一个变量（通常通过构造函数的参数进行设置）</p>
+</li>
+<li>
+<p>转换器( <strong>Transformers</strong> )：一些评价器（例如<code>imputer</code>）能够转换数据集；这些评价器称为 <em>转换器</em>。这个API也非常简单：通过调用 <code>transform()</code> 方法进行执行，数据集作为一个参数传入，返回值是变换之后的数据集。这个转换过程通常是依赖于学习到的参数的（通过之前的<code>fit</code>学习到），正如例子中的<code>imputer</code>。所有的转换器也有一个称为<code>fit_transform()</code>的方法，作用等价于先调用 <code>fit()</code> 再调用 <code>transform()</code> （有时候 <code>fit_transform()</code> 做了优化，运行得更快）。</p>
+</li>
+<li>
+<p>预测器( <strong>Predictors</strong> )：最后，一些评价器具有对给定数据集进行预测的能力，这些评价器称为预测器。例如之前章节中讲的线性回归模型就是一个预测器：给它一个国家的人均GDP，它就能预测幸福指数。一个预测器具有<code>predict()</code>方法：传入一个新实例的数据集，返回对应的预测结果数据集。它也有一个<code>score()</code>方法，将模型应用于给定的测试集，评估预测的质量（监督学习对模型的评价）；有的预测器也提供了用于测量预测置信度一些方法；</p>
+</li>
+</ul>
+</li>
+<li>
+<p>检查：评价器的所有超参数都能直接通过实例的公共属性进行访问，例如： <code>imputer.strategy</code>；并且评价器所有学到的参数也能通过实例的公共属性（属性名有下划线后缀）进行访问，例如：<code>imputer.statistics_</code>；</p>
+</li>
+<li>
+<p>不扩散类：数据集被表示成 NumPy 数组 或者是 Scipy 稀疏矩阵，而不是用户自定义的类。超参数是常规的Python字符串或者数字；</p>
+</li>
+<li>
+<p>组合：尽量使用现成的块。比如说，可以通过随意组合转换器（transformers）非常方便创建一个以流水线形式工作的评价器；</p>
+</li>
+<li>
+<p>机智的默认值：Scikit-Learn为大多数的参数提供了合理的默认值，能够非常简单快速地创建有基本功能的系统；</p>
+</li>
+</ul>
+<hr>
 <h1 class="mume-header" id="%E9%99%84%E5%BD%95a-%E7%BB%83%E4%B9%A0%E7%9A%84%E7%AD%94%E6%A1%88">附录A 练习的答案</h1>
 
 <h2 id="Chapter1Answer">第一章 机器学习纵览</h2>
@@ -1506,6 +1692,18 @@ Name: income_cat, dtype: float64
 <li><a href="#%E5%88%9B%E5%BB%BA%E5%B7%A5%E4%BD%9C%E5%8C%BA">创建工作区</a></li>
 <li><a href="#%E6%9F%A5%E7%9C%8B%E8%BF%94%E5%9B%9E%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%9C">查看返回的数据结果</a></li>
 <li><a href="#%E5%88%9B%E5%BB%BA%E6%B5%8B%E8%AF%95%E9%9B%86">创建测试集</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%91%E7%8E%B0%E5%B9%B6%E5%8F%AF%E8%A7%86%E5%8C%96%E6%95%B0%E6%8D%AE%E4%BB%A5%E8%8E%B7%E5%BE%97%E6%B4%9E%E5%AF%9F">发现并可视化数据以获得洞察</a></li>
+<li><a href="#%E5%9C%B0%E7%90%86%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96">地理数据可视化</a>
+<ul>
+<li><a href="#%E5%AF%BB%E6%89%BE%E7%9B%B8%E5%85%B3%E6%80%A7">寻找相关性</a></li>
+<li><a href="#%E5%B0%9D%E8%AF%95%E5%B1%9E%E6%80%A7%E7%9A%84%E8%81%94%E5%90%88">尝试属性的联合</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%BA%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AE%97%E6%B3%95%E5%87%86%E5%A4%87%E6%95%B0%E6%8D%AE">为机器学习算法准备数据</a>
+<ul>
+<li><a href="#%E6%95%B0%E6%8D%AE%E6%B8%85%E7%90%86">数据清理</a></li>
 </ul>
 </li>
 </ul>

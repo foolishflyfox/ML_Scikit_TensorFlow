@@ -32,9 +32,16 @@ Numpy 是Python用于科学计算的基础库，它包含了：强大的 N维数
 Pandas 模块是Python进行数据处理的利器。
 
 - `pandas.read_csv` :从csv文件读取数据，创建一个pandas.DataFrame对象用于数据存储；
+- `pandas.isnull` :判断DataFrame或Series中的元素，若为整数型，判断是否为 NaN，如果是对象，判断是否为 None/NaN
 - `apply` :Pandas中的 DataFrame、Series都有该方法，用迭代的方法对其中的元素做操作；
 - `~` :Pandas中的DataFrame、Series可使用，当其中的数据类型为bool，则~df可以将True、False进行翻转；
 - `where` :Pandas中的 DataFrame、Series都要改方法，用于修改不满足条件的数据；
+- `copy` :创建一个拷贝；
+- `sort_values` :按值进行重新排序；参数`ascending`指定是否递增排序；
+- `sort_index` :按索引重新排序；
+- `fillna` :将值为 NaN 的元素换成指定数值；
+- `drop` :将指定的行/列删除(对于DataFrame),删除指定的元素(对Series)
+- `dropna` :对 DataFrame 将含NaN的行删除，可以通过指定`subset`设置需要检查的列；Series删除NaN的元素
 
 ### DataFrame
 
@@ -47,10 +54,28 @@ Pandas 模块是Python进行数据处理的利器。
 - `pandas.DataFrame.hist` :绘制数据中所有数值型属性的柱状图,其中的`bins`参数用于指定柱数，`figsize`参数用于指定每个柱状图的尺寸；
 - `pandas.DataFrame.reset_index` :将当前DataFrame中的index值变为数据中的一列；
 - `pandas.DataFrame.drop` :删除某行或某属性，如果`axis`为0，表示删除某行，如果是1，表示参数某属性；第一个参数`labels`可以是一个值或一个数组，为数组时可同时删除多个；`inplace`表示是修改实例还是讲修改结果返回；
+- `pandas.DataFrame.plot(kind="scatter", x="column1", y="column2", alpha=0.1)`: 以DataFrame中的 column1 列为横坐标，以 column2 列为纵坐标，透明度为0.1进行绘图；`s`指定半径，`label`显示点的含义，`cmap` 指定色图，`c`指定颜色取值，`colorbar`指定是否显示颜色条；
+- `pandas.DataFrame.corr` :计算属性之间的相关性，其返回值还是一个 `DataFrame` 实例，其 columns 和 index 都是属性名；`corr`是correlation前4字母；
+
+### Series
+
+### plotting
+
+- `pandas.plotting.scatter_matrix` :绘制属性间的散点图，`kind=scatter`表示绘制散点图，`x=attribute1`,`y=attribute2`,`alpha=0.2`；
 
 ## Scikit learn
 
 Scikit learn的特点：简单、高效的数据挖掘和数据分析工具；免费；基于Numpy、SciPy和matplotlib；开源，使用BSD协议
+
+## preprocessing
+
+该模块包括 缩放、中心化、归一化、二值化和填充缺失值等方法。
+
+### Imputer
+
+- `sklearn.precessing.Imputer(strategy="median")` :构建用中位值填充缺失值的填充器，设创建的实例为 `imputer`，`strategy`可以取`median`/`mean`/`most_frequent`；
+- `imputer.fit(df)` :适应某个DataFrame实例；
+- `imputer.transform(df)` :将训练好的填充器用于df，返回一个 Numpy 数组；
 
 ### model_selection
 
