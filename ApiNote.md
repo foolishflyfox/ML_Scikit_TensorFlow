@@ -22,6 +22,8 @@ export_on_save:
 
 Numpy 是Python用于科学计算的基础库，它包含了：强大的 N维数组对象，精巧的（能够广播的）函数，集成 C/C++、Fortran代码的工具，能够进行线性代数运算、傅里叶变换以及获得随机数。
 
+- `np.c_[X,Y,Z]` :参数还可以增加，例子是指将函数相同的X，Y，Z合成一个array对象；
+
 ### random
 
 - `numpy.random.permutation` :将一个序列随机重排列(序列作为参数传入)，或者是返回一个重排列的range；
@@ -67,17 +69,29 @@ Pandas 模块是Python进行数据处理的利器。
 
 Scikit learn的特点：简单、高效的数据挖掘和数据分析工具；免费；基于Numpy、SciPy和matplotlib；开源，使用BSD协议
 
-## preprocessing
+- preprocessing :该模块包括 缩放、中心化、归一化、二值化和填充缺失值等方法。
 
-该模块包括 缩放、中心化、归一化、二值化和填充缺失值等方法。
+- LabelEncoder :用于将文本标签编码成数值码；
 
-### Imputer
+- OneHotEncoder :用于将数值码编码成独热向量；
+
+- LabelBinarizer :将文本标签编码成独热向量，类似于 `LabelEncoder` + `OneHotEncoder`；
+
+- MinMaxScaler :用于将数据进行 最小-最大缩放，`feature_range` 超参数指定缩放范围。中间的数值不能有 NaN。
+
+- StandardScaler :用于将数据进行标准化；
+
+#### pipeline
+
+- `sklearn.pipeline.Pipeline` :构建流水线，最终的转换器也有 `fit()`、`transform()`、`fit_transform()` 属性；
+
+#### Imputer
 
 - `sklearn.precessing.Imputer(strategy="median")` :构建用中位值填充缺失值的填充器，设创建的实例为 `imputer`，`strategy`可以取`median`/`mean`/`most_frequent`；
 - `imputer.fit(df)` :适应某个DataFrame实例；
 - `imputer.transform(df)` :将训练好的填充器用于df，返回一个 Numpy 数组；
 
-### model_selection
+#### model_selection
 
 - `sklearn.model_selection.train_test_split` :将数组或矩阵随机分成训练集和测试集；`test_size` 指定测试集的比例；`random_state` 设置随机种子；
 - `sklearn.model_selection.StratifiedShuffleSplit` :将数据进行分层采样，其中 `n_splits` 指定了交叉验证的次数，test_size确定了测试集大小，random_state设置种子；

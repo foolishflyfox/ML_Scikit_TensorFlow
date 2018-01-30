@@ -1325,6 +1325,200 @@ Scikit-Learn 的API设计得非常棒。[主要的设计原则](https://arxiv.or
 
 ---
 
+#### 处理文本和类别属性
+
+之前，我们留下了类别属性 `ocean_proximity` ，因为它是文本属性，我们不能计算它的中位数。大多数的机器学习算法是在数值的基础上工作的，所以我们需要将这些文本属性转换成数值。
+
+Scikit-Learn 为这种任务提供了一个称为 `LabelEncoder` 的转换器：
+```python
+from sklearn.preprocessing import LabelEncoder
+encoder = LabelEncoder()
+housing_cat = housing['ocean_proximity']
+housing_cat_encoded = encoder.fit_transform(housing_cat)
+housing_cat_encoded
+```
+输出为：
+```
+array([0, 0, 4, ..., 1, 0, 3])
+```
+
+现在，我们能够通过机器学习算法使用这些数值了。你可以通过实例的 `class_` 属性查看编码器是的映射规则是什么("<1H OCEAN" 映射到0，“INLAND” 映射到1，等等)：
+```python
+print(encoder.classes_)
+```
+输出：
+```
+['<1H OCEAN' 'INLAND' 'ISLAND' 'NEAR BAY' 'NEAR OCEAN']
+```
+
+这种表示方式的缺点是，机器学习会以为两个值越接近，他们越相似，值相差越大，越不相似。但显然并不是这样的（比如，类别0和类别4比类别0和类别1更相似）。为了接近这一问题，一种通用的解决方案是为每个类别创建一个二进制属性：当类别是 “<1H OCEAN”时，设置其中一个属性为1，其他属性为0；当类别是 “INLAND” 时，设置另一个属性为1，其他属性为0，等等。这种编码方式称为 *独热编码(one-hot encoding)*，因为只有一个属性将设置为1（hot状态），其他属性为0（cold状态）；
+
+Scikit-Learn 提供了 `OneHotEncoder` 编码器，将整数类别值转化为独热向量。让我们将类别编码为独热向量，注意 `fit_transform` 需要传入的是2维数组，但 `housing_cat_encoded` 是一个1维向量，所以我们需要对其重塑：
+```python
+from sklearn.preprocessing import OneHotEncoder
+encoder = OneHotEncoder()
+housing_cat_1hot = encoder.fit_transform(housing_cat_encoded.reshape(-1,1))
+housing_cat_1hot
+```
+输出为：
+```
+<16512x5 sparse matrix of type '<class 'numpy.float64'>'
+	with 16512 stored elements in Compressed Sparse Row format>
+```
+注意：输出的是 SciPy 稀疏矩阵，而不是NumPy数组。当你的类别属性中存在上千个类时，这一点非常有用。在使用独热编码进行变换后，我们得到一个含有上千个列的矩阵，其中每一行只有一个1，其他都是0。用大量的存储空间存储几乎全部是0的矩阵未免显得太过浪费，所以使用稀疏矩阵，只存储非0元素的位置。你可以和普通的2维数组一样使用它，但如果你真的希望将其转换为一个NumPy数组，可以调用`toarray()` 方法：
+```python
+housing_cat_1hot.toarray()
+```
+输出为：
+```
+array([[ 1.,  0.,  0.,  0.,  0.],
+       [ 1.,  0.,  0.,  0.,  0.],
+       [ 0.,  0.,  0.,  0.,  1.],
+       ...,
+       [ 0.,  1.,  0.,  0.,  0.],
+       [ 1.,  0.,  0.,  0.,  0.],
+       [ 0.,  0.,  0.,  1.,  0.]])
+```
+我们可以将之前的两个转换过程（首先将文本类别转换为数值类别，再将数值类别转换成独热向量）的过程通过 `LabelBinarizer` 一次性完成：
+```python
+from sklearn.preprocessing import LabelBinarizer
+encoder = LabelBinarizer()
+housing_cat_1hot = encoder.fit_transform(housing_cat)
+housing_cat_1hot
+```
+输出为：
+```
+array([[1, 0, 0, 0, 0],
+       [1, 0, 0, 0, 0],
+       [0, 0, 0, 0, 1],
+       ...,
+       [0, 1, 0, 0, 0],
+       [1, 0, 0, 0, 0],
+       [0, 0, 0, 1, 0]])
+```
+注意，返回的结果默认是NumPy数组，你可以在 `LabelBinarizer` 的构造函数中设置参数 `sparse_output=True`，得到的将是一个稀疏矩阵。
+
+#### 自定义变换
+
+虽然 Scikit-Learn 提供了很多的有用转换，但有时候你还是需要为你的任务动手写一个定制的数据清理操作或联合指定的属性。你希望你的转换器能够和Scikit-Learn的功能模块无缝工作（就像流水线一样），因为 Scikit-Learn 依赖于 *鸭子类型*（而不是继承），所以你只需要创建一个类，实现3个方法：`fit()`(返回它自身)，`transform()` 和 `fit_transform()` 函数就可以了。最后一个函数可以通过简单地将 `TransformerMixin` 设为父类来实现，不需要手动编码。另外，如果你将 `BaseEstimator` 也作为父类（并且避免在构造函数中使用`*arg` 和 `**kargs`），你将得到两个“附送”的方法（get_params() 和 set_params()），这对超参数的自动调整非常有用。
+
+> **鸭子编程**：动态类型的一种风格。在这种风格中，一个对象有效的语义，不是由继承自特定的类或实现特定的接口，而是由"当前方法和属性的集合"决定。
+> ——维基百科
+
+比如说，像之前我们讨论的，需要一个小的转换器添加一个联合的属性：
+```python
+from sklearn.base import BaseEstimator, TransformerMixin
+
+rooms_ix, bedrooms_ix, population_ix, household_ix = 3,4,5,6
+
+class CombinedAttributesAdder(BaseEstimator, TransformerMixin):
+    def __init__(self, add_bedrooms_per_room = True): # no *args or **kargs
+        self.add_bedrooms_per_room = add_bedrooms_per_room
+    def fit(self, X, y=None):
+        return self #nothing else to do
+    def transform(self, X, y=None):
+        rooms_per_household = X[:, rooms_ix] / X[:, household_ix]
+        population_per_household = X[:, population_ix] / X[:, household_ix]
+        if self.add_bedrooms_per_room:
+            bedrooms_per_room = X[:, bedrooms_ix] / X[:, rooms_ix]
+            return np.c_[X, rooms_per_household, population_per_household,
+                        bedrooms_per_room]
+        else:
+            return np.c_[X, rooms_per_household, population_per_household]
+attr_adder = CombinedAttributesAdder(add_bedrooms_per_room=False)
+housing_extra_attribs = attr_adder.transform(housing.values)
+```
+在这个例子中，转换器只有一个超参数 `add_bedrooms_per_room`，默认值为 True（提供明智的默认值非常有用）。该超参数供你选择是否在转换后的数据集中添加 `bedrooms_per_room` 属性。更常见的是，任何你在准备阶段不是100%确定的超参数，你都可以为它们提供参数及默认值。你越多地实现数据处理步骤的自动化，你就能利用这些步骤构建出越多自动化处理的组合，你也就越可能找到一种性能很好的组合（当然，也能节省你大量的时间）。
+
+#### 特征缩放
+
+你的数据需要的最重要的变换是 *特征缩放*。毫无疑问，当输入数据的属性有很多地不同量级的值时，机器学习算法通常不会表现得好。房子的数据也有这种情况：房间总数的范围从6到39320，而中位价格的范围只是从0到15。注意，通常来说，不需要对目标数据（标记）值进行缩放。
+
+有两种方式可以使所有的属性有相同量级：最小-最大缩放(min-max scaling)和 标准化(standardization)。
+
+最小-最大缩放（好多人称为归一化）非常简单：数据通过移动和缩放，使得最后它们的范围在 0~1 之间。具体的做法是将数据先减去最小值，然后除以最大值和最小值之差。Scikit-Learn 提供了一个称为 `MinMaxScaler` 变换器来完成这项工作，它有一个称为 `feature_range` 的超参数，在你因为某些原因希望最终的范围不是 0~1，可以修改这个超参数。
+
+标准化的过程非常不一样：首先，所有数据减去平均数（因此，标准化后的数据的平均数为0），之后除以标准差，最后结果的标准差为1。不像 最小-最大缩放，标准化不会将数据限定在指定的范围内，这对于一些算法会是一个问题（例如，神经网络通常期望输入值得范围是 0~1）。但它的优点是受离群点的影响非常小。比如说，某个区的中位收入等于100（因为失误造成），那么用 最小-最大缩放 的话，所有其他的从0\~15的值都被挤压在0\~0.15的范围内，而标准化将不会受到很大影响。Scikit-Learn 提供了 `StandardScaler`转换器用于实现标准化。
+
+**注：原书写的标准化方法是先减去平均数，再除以方差，经过使用 StandardScaler的测试，正确的是除以标准差而非方差**
+
+![warning](./asset/warning.png)对于所有的转换器而言，只需要让缩放器能够适应(fit)训练集就可以了，不需要适应整个数据集（包括测试集）。之后，你才能用这些缩放器去转换训练集、测试集以及新到来的数据。
+
+#### 转换流水线
+
+正如你所见，你需要以正确的顺序执行多个数据转换步骤。幸运的是，Scikit-Learn提供了 `Pipeline` 类来组织这些转换步骤。下面是一个针对数值属性的小型 pipeline：
+```python
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+num_pipeline = Pipeline([
+    ('imputer', Imputer(strategy='median')),
+    ('attribs_addr', CombinedAttributesAdder()),
+    ('std_scaler', StandardScaler())
+])
+
+housing_num_tr = num_pipeline.fit_transform(housing_num)
+```
+`Pipeline` 的构造函数需要传入一个以 名称/评估器 键值对组成的列表，定义了步骤顺序。除最后一个以外的所有评估器都必须是一个转换器（例如，它们必须有一个 `fit_transform()` 方法）。名称可以任意。
+
+当你调用 pipeline 的`fit()`方法时，它按顺序依次调用流水线上评估器的 `fit_transform()` 函数，并将各自的输出作为参数传递给下一个评估器的调用，知道到达最后一个评估器，它只需要调用 `fit()`方法即可。
+
+pipeline 所暴露的方法和最后一个评估器的方法相同。例如，最后的评估器是一个 `StandardScaler`，它也是一个转换器，那么对于传入的数据，我们可以通过`transform()`方法对其进行转换（当然也可以用`fit_transform()`来替代`fit()`和`transform()`这两步）。
+
+现在，你有一个处理数值型数据的流水线，你还需要应用`LabelBinarizer`处理类别值：该如何将这些变化都合并到同一个流水线中呢？Scikit-Learn 为这种情况提供了一个 `FeatureUnion` 的类。你交给它一个转换器组成的列表（可以是一个流水线方式组成的转换器），当他的`transform()` 函数被调用时，它会并行运行每一个转换器的`transform()`函数，等到他们都完成输出后，会将这些输出连接起来作为返回结果（当然，如果是调用`fit()`方法，它也将并行调用所有转换器的`fit()`方法）。一个完整的包含数值和类别属性的流水线构造方法如下：
+```python
+from sklearn.pipeline import FeatureUnion
+
+num_attribs = list(housing_num)
+cat_attribs = ['ocean_proximity']
+
+num_pipeline = Pipeline([
+    ('selector', DataFrameSelector(num_attribs)),
+    ('imputer', Imputer(strategy='median')),
+    ('attribs_adder', CombinedAttributesAdder()),
+    ('std_scaler', StandardScaler()),
+])
+
+cat_pipeline = Pipeline([
+    ('selector', DataFrameSelector(cat_attribs)),
+    ('label_binarizer', LabelBinarizer()),
+])
+
+full_pipeline = FeatureUnion(transformer_list=[
+    ('num_pipeline', num_pipeline),
+    ('cat_pipeline', cat_pipeline),
+])
+```
+你可以非常简单地运行整个流水线：
+```python
+>>> housing_prepared = full_pipeline.fit_transform(housing)
+>>> housing_prepared
+
+array([[ 0.73225807, -0.67331551, 0.58426443, ..., 0. ,
+          0.        ,  0.        ],
+        [-0.99102923,  1.63234656, -0.92655887, ...,  0.        ,
+          0.        ,  0.        ],
+        [...]
+>>> housing_prepared.shape
+(16513, 17)
+```
+每个子流水线都以选择功能转换器开始：它简单的通过选择需要的属性（数值或类别）对数据进行转换，丢弃剩下的数据，将 DataFrame 类型的结果转换为 NumPy 数组。在Scikit-Learn中没有处理Pandas DataFrame的方法，所以我们需要写一个简单的自定义转换器来完成这个任务：
+
+> 但检查 #3886 的拉请求，在其中介绍了一个 `ColumnTransformer` 类可以使指定属性的转换更加简单。你也可以运行pip3下载sklearn-pandas 获取 `DataFrameMapper`，一个与之相似的类。
+
+```python
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class DataFrameSelector(BaseEstimator, TransformerMixin):
+    def __init__(self, attribute_names):
+        self.attribute_names = attribute_names
+    def fit(self, X, y=None):
+        return self
+    def transform(self, X):
+        return X[self.attribute_names].values
+```
+
+
 # 附录A 练习的答案
 
 <h2 id="Chapter1Answer">第一章 机器学习纵览</h2>

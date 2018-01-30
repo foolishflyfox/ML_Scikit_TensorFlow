@@ -318,6 +318,10 @@ code.language-yaml {
 <li><a href="#%E4%B8%BA%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AE%97%E6%B3%95%E5%87%86%E5%A4%87%E6%95%B0%E6%8D%AE">为机器学习算法准备数据</a>
 <ul>
 <li><a href="#%E6%95%B0%E6%8D%AE%E6%B8%85%E7%90%86">数据清理</a></li>
+<li><a href="#%E5%A4%84%E7%90%86%E6%96%87%E6%9C%AC%E5%92%8C%E7%B1%BB%E5%88%AB%E5%B1%9E%E6%80%A7">处理文本和类别属性</a></li>
+<li><a href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8F%98%E6%8D%A2">自定义变换</a></li>
+<li><a href="#%E7%89%B9%E5%BE%81%E7%BC%A9%E6%94%BE">特征缩放</a></li>
+<li><a href="#%E8%BD%AC%E6%8D%A2%E6%B5%81%E6%B0%B4%E7%BA%BF">转换流水线</a></li>
 </ul>
 </li>
 </ul>
@@ -1399,6 +1403,168 @@ array([ -118.51 , 34.26 , 29. , 2119.5 , 433. ,
 </li>
 </ul>
 <hr>
+<h4 class="mume-header" id="%E5%A4%84%E7%90%86%E6%96%87%E6%9C%AC%E5%92%8C%E7%B1%BB%E5%88%AB%E5%B1%9E%E6%80%A7">处理文本和类别属性</h4>
+
+<p>之前，我们留下了类别属性 <code>ocean_proximity</code> ，因为它是文本属性，我们不能计算它的中位数。大多数的机器学习算法是在数值的基础上工作的，所以我们需要将这些文本属性转换成数值。</p>
+<p>Scikit-Learn 为这种任务提供了一个称为 <code>LabelEncoder</code> 的转换器：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>preprocessing <span class="token keyword">import</span> LabelEncoder
+encoder <span class="token operator">=</span> LabelEncoder<span class="token punctuation">(</span><span class="token punctuation">)</span>
+housing_cat <span class="token operator">=</span> housing<span class="token punctuation">[</span><span class="token string">'ocean_proximity'</span><span class="token punctuation">]</span>
+housing_cat_encoded <span class="token operator">=</span> encoder<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>housing_cat<span class="token punctuation">)</span>
+housing_cat_encoded
+</pre>
+<p>输出为：</p>
+<pre class="language-">array([0, 0, 4, ..., 1, 0, 3])
+</pre>
+<p>现在，我们能够通过机器学习算法使用这些数值了。你可以通过实例的 <code>class_</code> 属性查看编码器是的映射规则是什么(&quot;&lt;1H OCEAN&quot; 映射到0，“INLAND” 映射到1，等等)：</p>
+<pre class="language-python"><span class="token keyword">print</span><span class="token punctuation">(</span>encoder<span class="token punctuation">.</span>classes_<span class="token punctuation">)</span>
+</pre>
+<p>输出：</p>
+<pre class="language-">[&apos;&lt;1H OCEAN&apos; &apos;INLAND&apos; &apos;ISLAND&apos; &apos;NEAR BAY&apos; &apos;NEAR OCEAN&apos;]
+</pre>
+<p>这种表示方式的缺点是，机器学习会以为两个值越接近，他们越相似，值相差越大，越不相似。但显然并不是这样的（比如，类别0和类别4比类别0和类别1更相似）。为了接近这一问题，一种通用的解决方案是为每个类别创建一个二进制属性：当类别是 “&lt;1H OCEAN”时，设置其中一个属性为1，其他属性为0；当类别是 “INLAND” 时，设置另一个属性为1，其他属性为0，等等。这种编码方式称为 <em>独热编码(one-hot encoding)</em>，因为只有一个属性将设置为1（hot状态），其他属性为0（cold状态）；</p>
+<p>Scikit-Learn 提供了 <code>OneHotEncoder</code> 编码器，将整数类别值转化为独热向量。让我们将类别编码为独热向量，注意 <code>fit_transform</code> 需要传入的是2维数组，但 <code>housing_cat_encoded</code> 是一个1维向量，所以我们需要对其重塑：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>preprocessing <span class="token keyword">import</span> OneHotEncoder
+encoder <span class="token operator">=</span> OneHotEncoder<span class="token punctuation">(</span><span class="token punctuation">)</span>
+housing_cat_1hot <span class="token operator">=</span> encoder<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>housing_cat_encoded<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+housing_cat_1hot
+</pre>
+<p>输出为：</p>
+<pre class="language-">&lt;16512x5 sparse matrix of type &apos;&lt;class &apos;numpy.float64&apos;&gt;&apos;
+	with 16512 stored elements in Compressed Sparse Row format&gt;
+</pre>
+<p>注意：输出的是 SciPy 稀疏矩阵，而不是NumPy数组。当你的类别属性中存在上千个类时，这一点非常有用。在使用独热编码进行变换后，我们得到一个含有上千个列的矩阵，其中每一行只有一个1，其他都是0。用大量的存储空间存储几乎全部是0的矩阵未免显得太过浪费，所以使用稀疏矩阵，只存储非0元素的位置。你可以和普通的2维数组一样使用它，但如果你真的希望将其转换为一个NumPy数组，可以调用<code>toarray()</code> 方法：</p>
+<pre class="language-python">housing_cat_1hot<span class="token punctuation">.</span>toarray<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</pre>
+<p>输出为：</p>
+<pre class="language-">array([[ 1.,  0.,  0.,  0.,  0.],
+       [ 1.,  0.,  0.,  0.,  0.],
+       [ 0.,  0.,  0.,  0.,  1.],
+       ...,
+       [ 0.,  1.,  0.,  0.,  0.],
+       [ 1.,  0.,  0.,  0.,  0.],
+       [ 0.,  0.,  0.,  1.,  0.]])
+</pre>
+<p>我们可以将之前的两个转换过程（首先将文本类别转换为数值类别，再将数值类别转换成独热向量）的过程通过 <code>LabelBinarizer</code> 一次性完成：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>preprocessing <span class="token keyword">import</span> LabelBinarizer
+encoder <span class="token operator">=</span> LabelBinarizer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+housing_cat_1hot <span class="token operator">=</span> encoder<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>housing_cat<span class="token punctuation">)</span>
+housing_cat_1hot
+</pre>
+<p>输出为：</p>
+<pre class="language-">array([[1, 0, 0, 0, 0],
+       [1, 0, 0, 0, 0],
+       [0, 0, 0, 0, 1],
+       ...,
+       [0, 1, 0, 0, 0],
+       [1, 0, 0, 0, 0],
+       [0, 0, 0, 1, 0]])
+</pre>
+<p>注意，返回的结果默认是NumPy数组，你可以在 <code>LabelBinarizer</code> 的构造函数中设置参数 <code>sparse_output=True</code>，得到的将是一个稀疏矩阵。</p>
+<h4 class="mume-header" id="%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8F%98%E6%8D%A2">自定义变换</h4>
+
+<p>虽然 Scikit-Learn 提供了很多的有用转换，但有时候你还是需要为你的任务动手写一个定制的数据清理操作或联合指定的属性。你希望你的转换器能够和Scikit-Learn的功能模块无缝工作（就像流水线一样），因为 Scikit-Learn 依赖于 <em>鸭子类型</em>（而不是继承），所以你只需要创建一个类，实现3个方法：<code>fit()</code>(返回它自身)，<code>transform()</code> 和 <code>fit_transform()</code> 函数就可以了。最后一个函数可以通过简单地将 <code>TransformerMixin</code> 设为父类来实现，不需要手动编码。另外，如果你将 <code>BaseEstimator</code> 也作为父类（并且避免在构造函数中使用<code>*arg</code> 和 <code>**kargs</code>），你将得到两个“附送”的方法（get_params() 和 set_params()），这对超参数的自动调整非常有用。</p>
+<blockquote>
+<p><strong>鸭子编程</strong>：动态类型的一种风格。在这种风格中，一个对象有效的语义，不是由继承自特定的类或实现特定的接口，而是由&quot;当前方法和属性的集合&quot;决定。<br>
+——维基百科</p>
+</blockquote>
+<p>比如说，像之前我们讨论的，需要一个小的转换器添加一个联合的属性：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>base <span class="token keyword">import</span> BaseEstimator<span class="token punctuation">,</span> TransformerMixin
+
+rooms_ix<span class="token punctuation">,</span> bedrooms_ix<span class="token punctuation">,</span> population_ix<span class="token punctuation">,</span> household_ix <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">6</span>
+
+<span class="token keyword">class</span> <span class="token class-name">CombinedAttributesAdder</span><span class="token punctuation">(</span>BaseEstimator<span class="token punctuation">,</span> TransformerMixin<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> add_bedrooms_per_room <span class="token operator">=</span> <span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">:</span> <span class="token comment" spellcheck="true"># no *args or **kargs</span>
+        self<span class="token punctuation">.</span>add_bedrooms_per_room <span class="token operator">=</span> add_bedrooms_per_room
+    <span class="token keyword">def</span> <span class="token function">fit</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">,</span> y<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self <span class="token comment" spellcheck="true">#nothing else to do</span>
+    <span class="token keyword">def</span> <span class="token function">transform</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">,</span> y<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        rooms_per_household <span class="token operator">=</span> X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> rooms_ix<span class="token punctuation">]</span> <span class="token operator">/</span> X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> household_ix<span class="token punctuation">]</span>
+        population_per_household <span class="token operator">=</span> X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> population_ix<span class="token punctuation">]</span> <span class="token operator">/</span> X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> household_ix<span class="token punctuation">]</span>
+        <span class="token keyword">if</span> self<span class="token punctuation">.</span>add_bedrooms_per_room<span class="token punctuation">:</span>
+            bedrooms_per_room <span class="token operator">=</span> X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> bedrooms_ix<span class="token punctuation">]</span> <span class="token operator">/</span> X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> rooms_ix<span class="token punctuation">]</span>
+            <span class="token keyword">return</span> np<span class="token punctuation">.</span>c_<span class="token punctuation">[</span>X<span class="token punctuation">,</span> rooms_per_household<span class="token punctuation">,</span> population_per_household<span class="token punctuation">,</span>
+                        bedrooms_per_room<span class="token punctuation">]</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> np<span class="token punctuation">.</span>c_<span class="token punctuation">[</span>X<span class="token punctuation">,</span> rooms_per_household<span class="token punctuation">,</span> population_per_household<span class="token punctuation">]</span>
+attr_adder <span class="token operator">=</span> CombinedAttributesAdder<span class="token punctuation">(</span>add_bedrooms_per_room<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+housing_extra_attribs <span class="token operator">=</span> attr_adder<span class="token punctuation">.</span>transform<span class="token punctuation">(</span>housing<span class="token punctuation">.</span>values<span class="token punctuation">)</span>
+</pre>
+<p>在这个例子中，转换器只有一个超参数 <code>add_bedrooms_per_room</code>，默认值为 True（提供明智的默认值非常有用）。该超参数供你选择是否在转换后的数据集中添加 <code>bedrooms_per_room</code> 属性。更常见的是，任何你在准备阶段不是100%确定的超参数，你都可以为它们提供参数及默认值。你越多地实现数据处理步骤的自动化，你就能利用这些步骤构建出越多自动化处理的组合，你也就越可能找到一种性能很好的组合（当然，也能节省你大量的时间）。</p>
+<h4 class="mume-header" id="%E7%89%B9%E5%BE%81%E7%BC%A9%E6%94%BE">特征缩放</h4>
+
+<p>你的数据需要的最重要的变换是 <em>特征缩放</em>。毫无疑问，当输入数据的属性有很多地不同量级的值时，机器学习算法通常不会表现得好。房子的数据也有这种情况：房间总数的范围从6到39320，而中位价格的范围只是从0到15。注意，通常来说，不需要对目标数据（标记）值进行缩放。</p>
+<p>有两种方式可以使所有的属性有相同量级：最小-最大缩放(min-max scaling)和 标准化(standardization)。</p>
+<p>最小-最大缩放（好多人称为归一化）非常简单：数据通过移动和缩放，使得最后它们的范围在 0~1 之间。具体的做法是将数据先减去最小值，然后除以最大值和最小值之差。Scikit-Learn 提供了一个称为 <code>MinMaxScaler</code> 变换器来完成这项工作，它有一个称为 <code>feature_range</code> 的超参数，在你因为某些原因希望最终的范围不是 0~1，可以修改这个超参数。</p>
+<p>标准化的过程非常不一样：首先，所有数据减去平均数（因此，标准化后的数据的平均数为0），之后除以标准差，最后结果的标准差为1。不像 最小-最大缩放，标准化不会将数据限定在指定的范围内，这对于一些算法会是一个问题（例如，神经网络通常期望输入值得范围是 0~1）。但它的优点是受离群点的影响非常小。比如说，某个区的中位收入等于100（因为失误造成），那么用 最小-最大缩放 的话，所有其他的从0~15的值都被挤压在0~0.15的范围内，而标准化将不会受到很大影响。Scikit-Learn 提供了 <code>StandardScaler</code>转换器用于实现标准化。</p>
+<p><strong>注：原书写的标准化方法是先减去平均数，再除以方差，经过使用 StandardScaler的测试，正确的是除以标准差而非方差</strong></p>
+<p><img src="./asset/warning.png" alt="warning">对于所有的转换器而言，只需要让缩放器能够适应(fit)训练集就可以了，不需要适应整个数据集（包括测试集）。之后，你才能用这些缩放器去转换训练集、测试集以及新到来的数据。</p>
+<h4 class="mume-header" id="%E8%BD%AC%E6%8D%A2%E6%B5%81%E6%B0%B4%E7%BA%BF">转换流水线</h4>
+
+<p>正如你所见，你需要以正确的顺序执行多个数据转换步骤。幸运的是，Scikit-Learn提供了 <code>Pipeline</code> 类来组织这些转换步骤。下面是一个针对数值属性的小型 pipeline：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>preprocessing <span class="token keyword">import</span> StandardScaler
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>pipeline <span class="token keyword">import</span> Pipeline
+
+num_pipeline <span class="token operator">=</span> Pipeline<span class="token punctuation">(</span><span class="token punctuation">[</span>
+    <span class="token punctuation">(</span><span class="token string">'imputer'</span><span class="token punctuation">,</span> Imputer<span class="token punctuation">(</span>strategy<span class="token operator">=</span><span class="token string">'median'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">'attribs_addr'</span><span class="token punctuation">,</span> CombinedAttributesAdder<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">'std_scaler'</span><span class="token punctuation">,</span> StandardScaler<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+housing_num_tr <span class="token operator">=</span> num_pipeline<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>housing_num<span class="token punctuation">)</span>
+</pre>
+<p><code>Pipeline</code> 的构造函数需要传入一个以 名称/评估器 键值对组成的列表，定义了步骤顺序。除最后一个以外的所有评估器都必须是一个转换器（例如，它们必须有一个 <code>fit_transform()</code> 方法）。名称可以任意。</p>
+<p>当你调用 pipeline 的<code>fit()</code>方法时，它按顺序依次调用流水线上评估器的 <code>fit_transform()</code> 函数，并将各自的输出作为参数传递给下一个评估器的调用，知道到达最后一个评估器，它只需要调用 <code>fit()</code>方法即可。</p>
+<p>pipeline 所暴露的方法和最后一个评估器的方法相同。例如，最后的评估器是一个 <code>StandardScaler</code>，它也是一个转换器，那么对于传入的数据，我们可以通过<code>transform()</code>方法对其进行转换（当然也可以用<code>fit_transform()</code>来替代<code>fit()</code>和<code>transform()</code>这两步）。</p>
+<p>现在，你有一个处理数值型数据的流水线，你还需要应用<code>LabelBinarizer</code>处理类别值：该如何将这些变化都合并到同一个流水线中呢？Scikit-Learn 为这种情况提供了一个 <code>FeatureUnion</code> 的类。你交给它一个转换器组成的列表（可以是一个流水线方式组成的转换器），当他的<code>transform()</code> 函数被调用时，它会并行运行每一个转换器的<code>transform()</code>函数，等到他们都完成输出后，会将这些输出连接起来作为返回结果（当然，如果是调用<code>fit()</code>方法，它也将并行调用所有转换器的<code>fit()</code>方法）。一个完整的包含数值和类别属性的流水线构造方法如下：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>pipeline <span class="token keyword">import</span> FeatureUnion
+
+num_attribs <span class="token operator">=</span> list<span class="token punctuation">(</span>housing_num<span class="token punctuation">)</span>
+cat_attribs <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">'ocean_proximity'</span><span class="token punctuation">]</span>
+
+num_pipeline <span class="token operator">=</span> Pipeline<span class="token punctuation">(</span><span class="token punctuation">[</span>
+    <span class="token punctuation">(</span><span class="token string">'selector'</span><span class="token punctuation">,</span> DataFrameSelector<span class="token punctuation">(</span>num_attribs<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">'imputer'</span><span class="token punctuation">,</span> Imputer<span class="token punctuation">(</span>strategy<span class="token operator">=</span><span class="token string">'median'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">'attribs_adder'</span><span class="token punctuation">,</span> CombinedAttributesAdder<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">'std_scaler'</span><span class="token punctuation">,</span> StandardScaler<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+cat_pipeline <span class="token operator">=</span> Pipeline<span class="token punctuation">(</span><span class="token punctuation">[</span>
+    <span class="token punctuation">(</span><span class="token string">'selector'</span><span class="token punctuation">,</span> DataFrameSelector<span class="token punctuation">(</span>cat_attribs<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">'label_binarizer'</span><span class="token punctuation">,</span> LabelBinarizer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+full_pipeline <span class="token operator">=</span> FeatureUnion<span class="token punctuation">(</span>transformer_list<span class="token operator">=</span><span class="token punctuation">[</span>
+    <span class="token punctuation">(</span><span class="token string">'num_pipeline'</span><span class="token punctuation">,</span> num_pipeline<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">'cat_pipeline'</span><span class="token punctuation">,</span> cat_pipeline<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span>
+</pre>
+<p>你可以非常简单地运行整个流水线：</p>
+<pre class="language-python"><span class="token operator">>></span><span class="token operator">></span> housing_prepared <span class="token operator">=</span> full_pipeline<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>housing<span class="token punctuation">)</span>
+<span class="token operator">>></span><span class="token operator">></span> housing_prepared
+
+array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">0.73225807</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">0.67331551</span><span class="token punctuation">,</span> <span class="token number">0.58426443</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">.</span> <span class="token punctuation">,</span>
+          <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">,</span>  <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">0.99102923</span><span class="token punctuation">,</span>  <span class="token number">1.63234656</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">0.92655887</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>  <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">,</span>
+          <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">,</span>  <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+<span class="token operator">>></span><span class="token operator">></span> housing_prepared<span class="token punctuation">.</span>shape
+<span class="token punctuation">(</span><span class="token number">16513</span><span class="token punctuation">,</span> <span class="token number">17</span><span class="token punctuation">)</span>
+</pre>
+<p>每个子流水线都以选择功能转换器开始：它简单的通过选择需要的属性（数值或类别）对数据进行转换，丢弃剩下的数据，将 DataFrame 类型的结果转换为 NumPy 数组。在Scikit-Learn中没有处理Pandas DataFrame的方法，所以我们需要写一个简单的自定义转换器来完成这个任务：</p>
+<blockquote>
+<p>但检查 #3886 的拉请求，在其中介绍了一个 <code>ColumnTransformer</code> 类可以使指定属性的转换更加简单。你也可以运行pip3下载sklearn-pandas 获取 <code>DataFrameMapper</code>，一个与之相似的类。</p>
+</blockquote>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>base <span class="token keyword">import</span> BaseEstimator<span class="token punctuation">,</span> TransformerMixin
+
+<span class="token keyword">class</span> <span class="token class-name">DataFrameSelector</span><span class="token punctuation">(</span>BaseEstimator<span class="token punctuation">,</span> TransformerMixin<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> attribute_names<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>attribute_names <span class="token operator">=</span> attribute_names
+    <span class="token keyword">def</span> <span class="token function">fit</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">,</span> y<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self
+    <span class="token keyword">def</span> <span class="token function">transform</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> X<span class="token punctuation">[</span>self<span class="token punctuation">.</span>attribute_names<span class="token punctuation">]</span><span class="token punctuation">.</span>values
+</pre>
 <h1 class="mume-header" id="%E9%99%84%E5%BD%95a-%E7%BB%83%E4%B9%A0%E7%9A%84%E7%AD%94%E6%A1%88">附录A 练习的答案</h1>
 
 <h2 id="Chapter1Answer">第一章 机器学习纵览</h2>
@@ -1704,6 +1870,10 @@ array([ -118.51 , 34.26 , 29. , 2119.5 , 433. ,
 <li><a href="#%E4%B8%BA%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AE%97%E6%B3%95%E5%87%86%E5%A4%87%E6%95%B0%E6%8D%AE">为机器学习算法准备数据</a>
 <ul>
 <li><a href="#%E6%95%B0%E6%8D%AE%E6%B8%85%E7%90%86">数据清理</a></li>
+<li><a href="#%E5%A4%84%E7%90%86%E6%96%87%E6%9C%AC%E5%92%8C%E7%B1%BB%E5%88%AB%E5%B1%9E%E6%80%A7">处理文本和类别属性</a></li>
+<li><a href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8F%98%E6%8D%A2">自定义变换</a></li>
+<li><a href="#%E7%89%B9%E5%BE%81%E7%BC%A9%E6%94%BE">特征缩放</a></li>
+<li><a href="#%E8%BD%AC%E6%8D%A2%E6%B5%81%E6%B0%B4%E7%BA%BF">转换流水线</a></li>
 </ul>
 </li>
 </ul>
