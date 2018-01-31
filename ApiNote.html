@@ -218,6 +218,12 @@ code.language-yaml {
 <ul>
 <li><a href="#%E5%87%BD%E6%95%B0%E7%94%A8%E6%B3%95%E6%91%98%E8%AE%B0">函数用法摘记</a>
 <ul>
+<li><a href="#pyton-%E4%B8%AD-module-%E5%92%8C-package-%E7%9A%84%E5%8C%BA%E5%88%AB">Pyton 中 module 和 package 的区别</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%B1%BB%E4%B8%AD%E7%9A%84-method-%E5%AE%9A%E4%B9%89%E5%BF%85%E9%9C%80%E6%98%BE%E7%A4%BA%E5%9C%B0%E4%BC%A0%E5%85%A5self">为什么类中的 method 定义必需显示地传入self</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8python%E4%B8%AD%E6%B2%A1%E6%9C%89-%E6%93%8D%E4%BD%9C%E7%AC%A6">为什么在Python中没有 ++ 、-- 操作符</a></li>
+<li><a href="#staticmethod-%E5%92%8C-classmethod"><code>@staticmethod</code> 和 <code>@classmethod</code></a></li>
+<li><a href="#%E5%91%BD%E5%90%8D%E6%83%AF%E4%BE%8B">命名惯例</a></li>
+<li><a href="#%E7%B1%BB%E4%B8%AD%E5%86%85%E7%BD%AE%E7%9A%84%E9%87%8D%E8%A6%81%E5%87%BD%E6%95%B0%E6%8E%A5%E5%8F%A3">类中内置的重要函数接口</a></li>
 <li><a href="#build-in-functions">Build-in Functions</a>
 <ul>
 <li><a href="#open">open</a></li>
@@ -251,6 +257,44 @@ code.language-yaml {
 <li><a href="#hashlib">hashlib</a></li>
 </ul>
 </li>
+</ul>
+<h2 class="mume-header" id="pyton-%E4%B8%AD-module-%E5%92%8C-package-%E7%9A%84%E5%8C%BA%E5%88%AB">Pyton 中 module 和 package 的区别</h2>
+
+<p>任何的Python文件都是一个module，module名是Python文件名去掉 <code>.py</code>之后留下来的部分。一个 package 是很多个 module 的集合。</p>
+<p><strong>划重点：</strong> 一个 module 是一个单独的Python文件，一个 package 是一个包含了很多Python文件的文件夹，为了区别于那些只是包含了很多Python脚本的文件夹，package 中通常含有一个 <code>__init__.py</code> 文件。package 可以进行多层嵌套，每层的 package 都有其自身的 <code>__init__.ph</code> 文件。</p>
+<p>module 和 package 只是在系统的层面上存在区别。当你 import 一个 package 或者 module 之后，Python 通常创建一个 <code>module</code> 类型的对象。当你在 import 了一个 package，只有在 <code>__init__.py</code> 中 变量/函数/类 是对外可见的，sub-package 或 module 是不可见的。</p>
+<h2 class="mume-header" id="%E4%B8%BA%E4%BB%80%E4%B9%88%E7%B1%BB%E4%B8%AD%E7%9A%84-method-%E5%AE%9A%E4%B9%89%E5%BF%85%E9%9C%80%E6%98%BE%E7%A4%BA%E5%9C%B0%E4%BC%A0%E5%85%A5self">为什么类中的 method 定义必需显示地传入self</h2>
+
+<ol>
+<li>通过<code>self</code>可以更容易看出你是在使用实例的方法/属性还是一个局部函数/变量；在C++中，你可以通过变量的声明来识别出该变量是否是局部变量，而在 Python 中就根本没有变量声明这种说法，所以你需要通过类的定义来对变量进行确认；</li>
+<li>这意味着如果要明确地调用某个类（不是某个实例）的方法，不需要特别的语法支持。在C++中，如果你想要调用被子类所重载的父类中的方法，你需要用到操作符<code>::</code>，而在Python中，你只需写 <code>basename.methodname(self, &lt;argument list&gt;)</code> 就可以了。这对于 <code>__init__()</code> 方法特别有用，一般的使用情形是：子类中的方法想要扩展父类中同名方法的功能，但有需要调用父类中的这个方法；</li>
+<li>不传入变量 <code>self</code> 可以看做是C++中的静态函数(通常在定义的上一行写<code>@staticmethod</code>)，传入 <code>self</code> 可以看做是C++中的普通成员函数；</li>
+</ol>
+<h2 class="mume-header" id="%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8python%E4%B8%AD%E6%B2%A1%E6%9C%89-%E6%93%8D%E4%BD%9C%E7%AC%A6">为什么在Python中没有 ++ 、-- 操作符</h2>
+
+<p>因为没有必要。在Python中，for 循环通常是 <code>for i in range(number)</code> ，而在 C/C++ 等语言中，for 循环通常是 <code>for(i=0; i&lt;number; ++i)</code>，所以 ++、-- 操作符在Python中不常用。而且 ++ 分为前++、后++，-- 也一样，这就因为这需要增加4个操作码，这个问题不是说添加这两个操作符有没有意义，而是说我们值不值得添加（毕竟做什么事情都需要在付出和获得之间进行权衡）。另外，需要说明的是 <code>++a</code> 并不会报错，但是要注意，这里的 ++ 并不是一个运算符，而是一个正号，所以，<code>a = +a = ++a = +++a = ...</code>；</p>
+<h2 class="mume-header" id="staticmethod-%E5%92%8C-classmethod"><code>@staticmethod</code> 和 <code>@classmethod</code></h2>
+
+<p><code>@staticmethod</code> 定义静态方法，可以不传入任何参数，也不能调用其他的成员函数；<code>@classmethod</code> 至少有一个参数，且参数名通常为 <code>cls</code>，通过该参数可以调用属于类的变量和方法。有这两句声明的函数，都可以通过类直接进行调用，而不一定要创建实例。</p>
+<h2 class="mume-header" id="%E5%91%BD%E5%90%8D%E6%83%AF%E4%BE%8B">命名惯例</h2>
+
+<p>Python中的命名规则：对用户公开的API中，应该体现的是用法而非实现的过程。</p>
+<p>需要避免的名字：不要使用l(小写的L)、O(大写的o)、I(大写的i)；因为这3个字母在有的字体中非常容易混淆；</p>
+<ul>
+<li>package 和 module 的命名：模块名应该简短、全部小写，为了增强可读性，可以在模块名中添加下划线；包名类似，简短、小写，不太提倡使用下划线。一些用 C/C++ 编写的扩展模块，其命名时，需要在名称最前面加上下划线，如<code>_socket</code>。</li>
+<li>class 命名：通常使用首字母大写命名法(大驼峰命名法)。对于Python内建的名称，有单独的约定：大多数的内建名称是一个单独的单词(如果两个单词，直接并到一起)，例外是：exception名称以及内建常量名(e.g. True,False,None)使用的是首字母大写命名法。</li>
+<li>exception 命名：因为异常通常所以一个class，所以满足上一条命名规范。通常，如果以个异常是一个错误的话，通常应该在名称后添加<code>Error</code>后缀。</li>
+<li>全局变量命名：（希望只是在模块内部使用）该命名规则与函数的命名规则相同。如果想通过 <code>from modulename import *</code> 导入模块内部元素时，可以通过 <code>__all__</code> 机制防止全局变量的污染，具体方法是：在module中定义<code>__all__</code>变量为一个list，其中的每一个元素都是字符串，表示变量名或函数名（相当于进行了注册），只有注册了的变量和函数才会在<code>from module import *</code>后被导出。</li>
+<li>函数与变量的命名：全部字母小写，为了增强可读性，可以在单词之间添加下划线。变量的命名也遵循相同的惯例。</li>
+<li>函数/方法的参数命名：对于实例的方法，第一个参数通常是<code>self</code>；对于类的方法，第一个参数通常是<code>cls</code>；如果函数的参数名与保留关键字冲突，最好是在后面加个下划线，而不是使用缩写或某些简化的写法。因此，<code>class_</code> 的参数名要比 <code>clss</code> 要好。（使用同义词进行替换更好）</li>
+<li>方法名称和实例名称：全小写，单词间用下划线隔开。对于非公开的成员变量、成员函数，在名称最前面加一个下划线；最前面是双下划线，是为了避免被子类覆盖；</li>
+<li>常量：常量名通常是全大写，并用下划线分隔，如<code>MAX_OVERFLOW</code> 和 <code>TOTAL</code></li>
+<li>继承的设计：如果你不知道某个类或实例的属性、方法是应该公开还是非公开，那就选择非公开吧。毕竟从非公开变为公开要比从公开变为非公开要来得容易。</li>
+</ul>
+<h2 class="mume-header" id="%E7%B1%BB%E4%B8%AD%E5%86%85%E7%BD%AE%E7%9A%84%E9%87%8D%E8%A6%81%E5%87%BD%E6%95%B0%E6%8E%A5%E5%8F%A3">类中内置的重要函数接口</h2>
+
+<ul>
+<li><code>__getitem__</code> :当用户对类的实例进行方括号(square brackets)操作是，该函数将会被调用；</li>
 </ul>
 <h2 class="mume-header" id="build-in-functions">Build-in Functions</h2>
 
@@ -414,6 +458,12 @@ code.language-yaml {
       <div class="md-sidebar-toc"><ul>
 <li><a href="#%E5%87%BD%E6%95%B0%E7%94%A8%E6%B3%95%E6%91%98%E8%AE%B0">函数用法摘记</a>
 <ul>
+<li><a href="#pyton-%E4%B8%AD-module-%E5%92%8C-package-%E7%9A%84%E5%8C%BA%E5%88%AB">Pyton 中 module 和 package 的区别</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%B1%BB%E4%B8%AD%E7%9A%84-method-%E5%AE%9A%E4%B9%89%E5%BF%85%E9%9C%80%E6%98%BE%E7%A4%BA%E5%9C%B0%E4%BC%A0%E5%85%A5self">为什么类中的 method 定义必需显示地传入self</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8python%E4%B8%AD%E6%B2%A1%E6%9C%89-%E6%93%8D%E4%BD%9C%E7%AC%A6">为什么在Python中没有 ++ 、-- 操作符</a></li>
+<li><a href="#staticmethod-%E5%92%8C-classmethod"><code>@staticmethod</code> 和 <code>@classmethod</code></a></li>
+<li><a href="#%E5%91%BD%E5%90%8D%E6%83%AF%E4%BE%8B">命名惯例</a></li>
+<li><a href="#%E7%B1%BB%E4%B8%AD%E5%86%85%E7%BD%AE%E7%9A%84%E9%87%8D%E8%A6%81%E5%87%BD%E6%95%B0%E6%8E%A5%E5%8F%A3">类中内置的重要函数接口</a></li>
 <li><a href="#build-in-functions">Build-in Functions</a>
 <ul>
 <li><a href="#open">open</a></li>
