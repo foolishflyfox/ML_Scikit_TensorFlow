@@ -324,6 +324,17 @@ code.language-yaml {
 <li><a href="#%E8%BD%AC%E6%8D%A2%E6%B5%81%E6%B0%B4%E7%BA%BF">转换流水线</a></li>
 </ul>
 </li>
+<li><a href="#%E9%80%89%E6%8B%A9%E5%92%8C%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B">选择和训练模型</a>
+<ul>
+<li><a href="#%E4%BD%BF%E7%94%A8%E8%AE%AD%E7%BB%83%E9%9B%86%E8%BF%9B%E8%A1%8C%E8%AE%AD%E7%BB%83%E5%92%8C%E8%AF%84%E4%BC%B0">使用训练集进行训练和评估</a></li>
+<li><a href="#%E9%80%9A%E8%BF%87%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81%E5%AE%9E%E7%8E%B0%E6%9B%B4%E5%A5%BD%E7%9A%84%E8%AF%84%E4%BC%B0">通过交叉验证实现更好的评估</a></li>
+</ul>
+</li>
+<li><a href="#%E8%B0%83%E4%BC%98%E4%BD%A0%E7%9A%84%E6%A8%A1%E5%9E%8B">调优你的模型</a>
+<ul>
+<li><a href="#%E7%BD%91%E6%A0%BC%E6%90%9C%E7%B4%A2">网格搜索</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -1516,7 +1527,36 @@ housing_num_tr <span class="token operator">=</span> num_pipeline<span class="to
 <p><code>Pipeline</code> 的构造函数需要传入一个以 名称/评估器 键值对组成的列表，定义了步骤顺序。除最后一个以外的所有评估器都必须是一个转换器（例如，它们必须有一个 <code>fit_transform()</code> 方法）。名称可以任意。</p>
 <p>当你调用 pipeline 的<code>fit()</code>方法时，它按顺序依次调用流水线上评估器的 <code>fit_transform()</code> 函数，并将各自的输出作为参数传递给下一个评估器的调用，知道到达最后一个评估器，它只需要调用 <code>fit()</code>方法即可。</p>
 <p>pipeline 所暴露的方法和最后一个评估器的方法相同。例如，最后的评估器是一个 <code>StandardScaler</code>，它也是一个转换器，那么对于传入的数据，我们可以通过<code>transform()</code>方法对其进行转换（当然也可以用<code>fit_transform()</code>来替代<code>fit()</code>和<code>transform()</code>这两步）。</p>
-<p>现在，你有一个处理数值型数据的流水线，你还需要应用<code>LabelBinarizer</code>处理类别值：该如何将这些变化都合并到同一个流水线中呢？Scikit-Learn 为这种情况提供了一个 <code>FeatureUnion</code> 的类。你交给它一个转换器组成的列表（可以是一个流水线方式组成的转换器），当他的<code>transform()</code> 函数被调用时，它会并行运行每一个转换器的<code>transform()</code>函数，等到他们都完成输出后，会将这些输出连接起来作为返回结果（当然，如果是调用<code>fit()</code>方法，它也将并行调用所有转换器的<code>fit()</code>方法）。一个完整的包含数值和类别属性的流水线构造方法如下：</p>
+<p>现在，你有一个处理数值型数据的流水线，你还需要应用<code>LabelBinarizer</code>处理类别值：该如何将这些变化都合并到同一个流水线中呢？Scikit-Learn 为这种情况提供了一个 <code>FeatureUnion</code> 的类。你交给它一个转换器组成的列表（可以是一个流水线方式组成的转换器），当它的<code>transform()</code> 函数被调用时，它会并行运行每一个转换器的<code>transform()</code>函数，等到他们都完成输出后，会将这些输出连接起来作为返回结果（当然，如果是调用<code>fit()</code>方法，它也将并行调用所有转换器的<code>fit()</code>方法）。</p>
+<blockquote>
+<p>注：这一节中下面部分的内容由于原书的顺序不太好，并且<code>LabelBinarizer</code>类的实例不能应用于Pipeline中，过对顺序于代码都做了调整；</p>
+</blockquote>
+<p>在这之前，我们先写一个用于选择器：它简单的通过选择需要的属性（数值或类别）对数据进行转换，丢弃剩下的数据，将 DataFrame 类型的结果转换为 NumPy 数组。在Scikit-Learn中没有处理Pandas DataFrame的方法，所以我们需要写一个简单的自定义转换器来完成这个任务：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>base <span class="token keyword">import</span> BaseEstimator<span class="token punctuation">,</span> TransformerMixin
+
+<span class="token keyword">class</span> <span class="token class-name">DataFrameSelector</span><span class="token punctuation">(</span>BaseEstimator<span class="token punctuation">,</span> TransformerMixin<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> attrs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>attrs <span class="token operator">=</span> attrs
+        <span class="token keyword">pass</span>
+    <span class="token keyword">def</span> <span class="token function">fit</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">,</span> Y<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self
+    <span class="token keyword">def</span> <span class="token function">transform</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">,</span> y<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> X<span class="token punctuation">[</span>self<span class="token punctuation">.</span>attrs<span class="token punctuation">]</span><span class="token punctuation">.</span>values
+</pre>
+<blockquote>
+<p>检查 #3886 的拉请求，在其中介绍了一个 <code>ColumnTransformer</code> 类可以使指定属性的转换更加简单。你也可以运行pip3下载sklearn-pandas 获取 <code>DataFrameMapper</code>，一个与之相似的类。</p>
+</blockquote>
+<p>又因为<code>LabelBinarizer</code>和<code>LabelEncoder</code>并不适用于<code>Pipeline</code>(具体解释见<a href="https://github.com/scikit-learn/scikit-learn/pull/3113">#3113 request</a>)，所以我们需要重新对<code>LabelBinarizer</code>进行封装，使其可以被装入到<code>Pipeline</code>中；</p>
+<pre class="language-python"><span class="token keyword">class</span> <span class="token class-name">CategoryBinarizer</span><span class="token punctuation">(</span>BaseEstimator<span class="token punctuation">,</span> TransformerMixin<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>_binarizer <span class="token operator">=</span> LabelBinarizer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">def</span> <span class="token function">fit</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">,</span> Y<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>_binarizer<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> self
+    <span class="token keyword">def</span> <span class="token function">transform</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">,</span> Y<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>_binarizer<span class="token punctuation">.</span>transform<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+</pre>
+<p>这里，我们通过对<code>LabelBinarizer</code>创建了一个新的类：<code>CategoryBinarizer</code>，现在就可以将我们的新类组装仅我们的流水线了：</p>
 <pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>pipeline <span class="token keyword">import</span> FeatureUnion
 
 num_attribs <span class="token operator">=</span> list<span class="token punctuation">(</span>housing_num<span class="token punctuation">)</span>
@@ -1531,40 +1571,147 @@ num_pipeline <span class="token operator">=</span> Pipeline<span class="token pu
 
 cat_pipeline <span class="token operator">=</span> Pipeline<span class="token punctuation">(</span><span class="token punctuation">[</span>
     <span class="token punctuation">(</span><span class="token string">'selector'</span><span class="token punctuation">,</span> DataFrameSelector<span class="token punctuation">(</span>cat_attribs<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-    <span class="token punctuation">(</span><span class="token string">'label_binarizer'</span><span class="token punctuation">,</span> LabelBinarizer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">'cat_binarizer'</span><span class="token punctuation">,</span> CategoryBinarizer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
 <span class="token punctuation">]</span><span class="token punctuation">)</span>
 
 full_pipeline <span class="token operator">=</span> FeatureUnion<span class="token punctuation">(</span>transformer_list<span class="token operator">=</span><span class="token punctuation">[</span>
     <span class="token punctuation">(</span><span class="token string">'num_pipeline'</span><span class="token punctuation">,</span> num_pipeline<span class="token punctuation">)</span><span class="token punctuation">,</span>
     <span class="token punctuation">(</span><span class="token string">'cat_pipeline'</span><span class="token punctuation">,</span> cat_pipeline<span class="token punctuation">)</span><span class="token punctuation">,</span>
 <span class="token punctuation">]</span><span class="token punctuation">)</span>
-</pre>
-<p>你可以非常简单地运行整个流水线：</p>
-<pre class="language-python"><span class="token operator">>></span><span class="token operator">></span> housing_prepared <span class="token operator">=</span> full_pipeline<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>housing<span class="token punctuation">)</span>
-<span class="token operator">>></span><span class="token operator">></span> housing_prepared
+housing_prepared <span class="token operator">=</span> full_pipeline<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>housing<span class="token punctuation">)</span>
 
-array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">0.73225807</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">0.67331551</span><span class="token punctuation">,</span> <span class="token number">0.58426443</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">.</span> <span class="token punctuation">,</span>
-          <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">,</span>  <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">0.99102923</span><span class="token punctuation">,</span>  <span class="token number">1.63234656</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">0.92655887</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>  <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">,</span>
-          <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">,</span>  <span class="token number">0</span><span class="token punctuation">.</span>        <span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
-<span class="token operator">>></span><span class="token operator">></span> housing_prepared<span class="token punctuation">.</span>shape
-<span class="token punctuation">(</span><span class="token number">16513</span><span class="token punctuation">,</span> <span class="token number">17</span><span class="token punctuation">)</span>
+housing_prepared
 </pre>
-<p>每个子流水线都以选择功能转换器开始：它简单的通过选择需要的属性（数值或类别）对数据进行转换，丢弃剩下的数据，将 DataFrame 类型的结果转换为 NumPy 数组。在Scikit-Learn中没有处理Pandas DataFrame的方法，所以我们需要写一个简单的自定义转换器来完成这个任务：</p>
-<blockquote>
-<p>但检查 #3886 的拉请求，在其中介绍了一个 <code>ColumnTransformer</code> 类可以使指定属性的转换更加简单。你也可以运行pip3下载sklearn-pandas 获取 <code>DataFrameMapper</code>，一个与之相似的类。</p>
-</blockquote>
-<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>base <span class="token keyword">import</span> BaseEstimator<span class="token punctuation">,</span> TransformerMixin
+<p>输出的结果为：</p>
+<pre class="language-">(16512, 16)
+array([[-1.15604281,  0.77194962,  0.74333089, ...,  0.        ,
+         0.        ,  0.        ],
+       [-1.17602483,  0.6596948 , -1.1653172 , ...,  0.        ,
+         0.        ,  0.        ],
+       [ 1.18684903, -1.34218285,  0.18664186, ...,  0.        ,
+         0.        ,  1.        ],
+       ...,
+       [ 1.58648943, -0.72478134, -1.56295222, ...,  0.        ,
+         0.        ,  0.        ],
+       [ 0.78221312, -0.85106801,  0.18664186, ...,  0.        ,
+         0.        ,  0.        ],
+       [-1.43579109,  0.99645926,  1.85670895, ...,  0.        ,
+         1.        ,  0.        ]])
+</pre>
+<h3 class="mume-header" id="%E9%80%89%E6%8B%A9%E5%92%8C%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B">选择和训练模型</h3>
 
-<span class="token keyword">class</span> <span class="token class-name">DataFrameSelector</span><span class="token punctuation">(</span>BaseEstimator<span class="token punctuation">,</span> TransformerMixin<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> attribute_names<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        self<span class="token punctuation">.</span>attribute_names <span class="token operator">=</span> attribute_names
-    <span class="token keyword">def</span> <span class="token function">fit</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">,</span> y<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        <span class="token keyword">return</span> self
-    <span class="token keyword">def</span> <span class="token function">transform</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        <span class="token keyword">return</span> X<span class="token punctuation">[</span>self<span class="token punctuation">.</span>attribute_names<span class="token punctuation">]</span><span class="token punctuation">.</span>values
+<p>最后，你已经完成了对这个问题的设计，你得到了数据、对它进行了探索，你通过采样将数据分成了训练集和测试集，并且你实现了转换流水线自动化进行数据清理以及为后续的机器学习算法进行了数据的预处理。你现在可以开始选择、训练机器学习模型了。</p>
+<h4 class="mume-header" id="%E4%BD%BF%E7%94%A8%E8%AE%AD%E7%BB%83%E9%9B%86%E8%BF%9B%E8%A1%8C%E8%AE%AD%E7%BB%83%E5%92%8C%E8%AF%84%E4%BC%B0">使用训练集进行训练和评估</h4>
+
+<p>得益于之前我们所做的工作，接下来要做的事情将要比你想象的要更简单。让我们先训练一个线性回归模型，就像我们之前的章节所做的工作：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>linear_model <span class="token keyword">import</span> LinearRegression
+
+lin_reg <span class="token operator">=</span> LinearRegression<span class="token punctuation">(</span><span class="token punctuation">)</span>
+lin_reg<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>housing_prepared<span class="token punctuation">,</span> housing_labels<span class="token punctuation">)</span>
 </pre>
+<p>好了，你现在已经完成了一个可以工作的线性回归模型。让我们在训练集中选择一些实例尝试使用该模型：</p>
+<pre class="language-python">some_data <span class="token operator">=</span> housing<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span>
+some_labels <span class="token operator">=</span> housing_labels<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span>
+some_data_prepared <span class="token operator">=</span> full_pipeline<span class="token punctuation">.</span>transform<span class="token punctuation">(</span>some_data<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Predictions:\t"</span><span class="token punctuation">,</span> lin_reg<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>some_data_prepared<span class="token punctuation">)</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token string">"int"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Labels:\t\t"</span><span class="token punctuation">,</span> some_labels<span class="token punctuation">.</span>astype<span class="token punctuation">(</span>int<span class="token punctuation">)</span><span class="token punctuation">.</span>values<span class="token punctuation">)</span>
+</pre>
+<p>输出为：</p>
+<pre class="language-">Predictions:	 [210644 317768 210956  59218 189747]
+Labels:		 [286600 340600 196900  46300 254500]
+</pre>
+<p>这说明模型已经工作了，虽然预测的结果不是那么准确。让我们使用 Scikit-Learn 提供的<code>mean_squared_error</code>函数测量这个回归模型在所有训练集上的 RMSE 值：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>metrics <span class="token keyword">import</span> mean_squared_error
+housing_predictions <span class="token operator">=</span> lin_reg<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>housing_prepared<span class="token punctuation">)</span>
+lin_mse <span class="token operator">=</span> mean_squared_error<span class="token punctuation">(</span>housing_labels<span class="token punctuation">,</span> housing_predictions<span class="token punctuation">)</span>
+lin_rmse <span class="token operator">=</span> np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>lin_mse<span class="token punctuation">)</span>
+lin_rmse
+</pre>
+<p>输出为：<code>68628.198198489234</code></p>
+<p>好了，至少我们做出了一些东西，比什么都没有要要一些。但这的确不是一个好的分数：大多数区的中位房价是在 120000 ~ 265000 美元之间，所以一个误差达到 68628美元 的预测的确不让人满意。</p>
+<p>这是一个模型欠拟合于训练集数据的例子；如果发生了这种情况，说明了特征向量并没有提供足够多的信息用于做出好的预测，或者说是模型本身不够强大。正如我们之前章节中所说的，解决欠拟合问题的主要手段是：选址一个更强大的模型，给训练算法提供更好的特征向量，减少读模型的限制。该模型没有规则化，所以最后一个选项排除。你可以尝试增加更多的特性（某个区人口的历史记录），但首先让我们尝试一个更加复杂的模型。</p>
+<p>让我们训练一个决策树回归。这是一个强大的模型，有能力找到数据中复杂的非线性关系（决策树将在<a href="#20180201164000">第六章</a>进行具体讲解）。下面的代码看起来应该比较熟悉：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>tree <span class="token keyword">import</span> DecisionTreeRegressor
+
+tree_reg <span class="token operator">=</span> DecisionTreeRegressor<span class="token punctuation">(</span><span class="token punctuation">)</span>
+tree_reg<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>housing_prepared<span class="token punctuation">,</span> housing_labels<span class="token punctuation">)</span>
+</pre>
+<p>现在，这个模型已经完成训练了，让我们对他在训练集上进行评估：</p>
+<pre class="language-python">housing_predictions <span class="token operator">=</span> tree_reg<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>housing_prepared<span class="token punctuation">)</span>
+tree_mse <span class="token operator">=</span> mean_squared_error<span class="token punctuation">(</span>housing_labels<span class="token punctuation">,</span> housing_predictions<span class="token punctuation">)</span>
+tree_rmse <span class="token operator">=</span> np<span class="token punctuation">.</span>square<span class="token punctuation">(</span>lin_mse<span class="token punctuation">)</span>
+tree_rmse
+</pre>
+<p>输出结果为：<code>0.0</code></p>
+<p>等一下，发生了什么情况！？完全没有误差，那这个模型是不是真的就是完美的了呢？当然不是，这个模型很可能发生了严重的过拟合。你怎么确定？正如我们之前所说的，在你得到一个令你有信心的模型之前，不要去动测试集，所以你需要将一部分的训练集数据划分出来用于模型的验证。</p>
+<h4 class="mume-header" id="%E9%80%9A%E8%BF%87%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81%E5%AE%9E%E7%8E%B0%E6%9B%B4%E5%A5%BD%E7%9A%84%E8%AF%84%E4%BC%B0">通过交叉验证实现更好的评估</h4>
+
+<p>一种验证的方式是：通过函数<code>train_test_split</code>函数将训练集分成更小的训练集和一个确认集，接着使用这个更小的训练集进行训练，并使用确认集进行评估。这里有一点工作量，但在原理上没有什么困难，也能工作得相当不错。</p>
+<p>另一种相当好的替代方案是使用 Scikit-Learn 的 <em>交叉验证</em> 功能。下面的代码使用的是 k-折交叉验证：它随机将训练集分成10个不同的子集，称为 <em>折(fold)</em>，之后，将决策树模型训练10次，每次讲其中1个子集选为确认集，另外9个子集作为训练集。结果是得到包含有10个评价结果的一个数组：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>model_selection <span class="token keyword">import</span> cross_val_score
+scores <span class="token operator">=</span> cross_val_score<span class="token punctuation">(</span>tree_reg<span class="token punctuation">,</span> housing_prepared<span class="token punctuation">,</span> housing_labels<span class="token punctuation">,</span>
+                        scoring<span class="token operator">=</span><span class="token string">"neg_mean_squared_error"</span><span class="token punctuation">,</span> cv<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+rmse_scores <span class="token operator">=</span> np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span><span class="token operator">-</span>scores<span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/warning.png" alt="warning"> Scikit-Learn 中用于交叉验证计算的函数属于效用函数(最大表示效果越好)而不是代价函数(越小表示效果越好)，所以打分函数实际上与 MSE 更好相反（是一个负数），这也就是第三行的代码在计算平方根时需要使用<code>-score</code>的原因了。</p>
+<p>让我们来看看效果：</p>
+<pre class="language-python"><span class="token keyword">def</span> <span class="token function">display_scores</span><span class="token punctuation">(</span>scores<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Scores:"</span><span class="token punctuation">,</span> scores<span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token string">"int"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Mean:"</span><span class="token punctuation">,</span> scores<span class="token punctuation">.</span>mean<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Standard deviation:"</span><span class="token punctuation">,</span> scores<span class="token punctuation">.</span>std<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+display_scores<span class="token punctuation">(</span>rmse_scores<span class="token punctuation">)</span>
+</pre>
+<p>结果为：</p>
+<pre class="language-">Scores: [68805 67048 70926 69779 70477 75976 68546 70374 77214 71554]
+Mean: 71070.3646624
+Standard deviation: 3037.24756141
+</pre>
+<p>现在，决策数看起来没有它之前的好。甚至比线性回归模型都要差！注意，交叉验证不仅使你可以评估你的模型的性能，也能对评估方法本身做出评价(通过标准差 Standard deviation)。但是，交叉验证需要多次训练、计算代价，所以它总是可行。</p>
+<p>让我们看看使用线性回归模型的交叉验证结果：</p>
+<pre class="language-python">lin_scores <span class="token operator">=</span> cross_val_score<span class="token punctuation">(</span>lin_reg<span class="token punctuation">,</span> housing_prepared<span class="token punctuation">,</span> housing_labels<span class="token punctuation">,</span>
+                            scoring<span class="token operator">=</span><span class="token string">"neg_mean_squared_error"</span><span class="token punctuation">,</span> cv<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+lin_rmse <span class="token operator">=</span> np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span><span class="token operator">-</span>lin_scores<span class="token punctuation">)</span>
+display_scores<span class="token punctuation">(</span>lin_rmse<span class="token punctuation">)</span>
+</pre>
+<p>输出结果为：</p>
+<pre class="language-">Scores: [66782 66960 70347 74739 68031 71193 64969 68281 71552 67665]
+Mean: 69052.4613635
+Standard deviation: 2731.6740018
+</pre>
+<p>我们的猜测是正确的。决策树模型的过拟合太严重的，其表现的性能甚至比线性回归模型都要差。</p>
+<p>让我们尝试最后一个模型：RandomForestRegression。具体的内容我们将在<a href="#20180201213244">第7章</a>中具体介绍，简单来说，随机森林就是随机地在数据子集上训练多棵决策树，之后，取多个随机数预测结果的平均值作为预测值。在许多模型的基础上建立的一个模型的学习方法称为 <em>集成学习</em>，这通常是使机器学习表现得更好的常用方法。实现代码如下：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>ensemble <span class="token keyword">import</span> RandomForestRegressor
+forest_reg <span class="token operator">=</span> RandomForestRegressor<span class="token punctuation">(</span><span class="token punctuation">)</span>
+forest_reg<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>housing_prepared<span class="token punctuation">,</span> housing_labels<span class="token punctuation">)</span>
+forest_rmse <span class="token operator">=</span> mean_squared_error<span class="token punctuation">(</span>forest_reg<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>housing_prepared<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                                housing_labels<span class="token punctuation">)</span><span class="token operator">**</span><span class="token number">0.5</span>
+forest_scores <span class="token operator">=</span> cross_val_score<span class="token punctuation">(</span>forest_reg<span class="token punctuation">,</span> housing_prepared<span class="token punctuation">,</span> housing_labels<span class="token punctuation">,</span>
+                               scoring<span class="token operator">=</span><span class="token string">"neg_mean_squared_error"</span><span class="token punctuation">,</span> cv<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+forest_rmse_scores <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">-</span>forest_scores<span class="token punctuation">)</span><span class="token operator">**</span><span class="token number">0.5</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"forest_rmse:"</span><span class="token punctuation">,</span> forest_rmse<span class="token punctuation">)</span>
+display_scores<span class="token punctuation">(</span>forest_rmse_scores<span class="token punctuation">)</span>
+</pre>
+<p>输出为：</p>
+<pre class="language-">forest_rmse: 22227.2941501
+Scores: [50826 49926 51863 54311 52638 55922 51803 50674 55377 52619]
+Mean: 52596.4826457
+Standard deviation: 1919.83897829
+</pre>
+<p>看起来的确比前两种模型更好：随机森林看起来非常理想。然而，需要注意的是在训练集上的 RMSE 值仍然要比在确认集上的 RMSE 要小很多，这意味着该模型在训练集上仍然存在过拟合。解决过拟合的一种解决方案是简化模型，限制其复杂度(通过正规化)，或者是使用更多的训练数据。但在你想继续在随机森林这条路上走得更远之前，你最好还是先尝试一下其他类别的一些机器学习算法（比如使用不同核的多种向量机模型，或者是神经网络等等），不要花太多时间用于调整参数，我们现阶段的目标是得到一个表现性能良好的模型名的列表（大概需要2~5个模型）。</p>
+<p><img src="./asset/suggest.png" alt="suggest">你应当保存所有你实验过的模型，这样在之后，你能非常简单地还原到你想要的模型。保存的内容包括：模型的超参数和训练得到的参数，以及交叉验证的分数、真实的预测结果等。这使你可以非常简单的比较不同类型模型的得分，以及它们的错误数。你可以通过 Python 的 <code>pickle</code> 模块或 <code>sklearn.externals.joblib</code>模块 非常方便地进行保存。其中 <code>sklearn.externals.joblib</code>对于序列化大型的NumPy数组效率更高。</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>externals <span class="token keyword">import</span> joblib
+joblib<span class="token punctuation">.</span>dump<span class="token punctuation">(</span>my_model<span class="token punctuation">,</span> <span class="token string">"my_model.pkl"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 之后 ...</span>
+my_model_loaded <span class="token operator">=</span> joblib<span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token string">"my_model.pkl"</span><span class="token punctuation">)</span>
+</pre>
+<h3 class="mume-header" id="%E8%B0%83%E4%BC%98%E4%BD%A0%E7%9A%84%E6%A8%A1%E5%9E%8B">调优你的模型</h3>
+
+<p>假定你现在已经有了一个理性模型小列表。你现在需要做的是对它们进行调优。让我们看看你可以以哪些方式完成。</p>
+<h4 class="mume-header" id="%E7%BD%91%E6%A0%BC%E6%90%9C%E7%B4%A2">网格搜索</h4>
+
+<h2 id="20180201164000">第六章 决策树</h2>
+<h2 id="20180201213244">第七章 集成学习与随机深林</h2>
 <h1 class="mume-header" id="%E9%99%84%E5%BD%95a-%E7%BB%83%E4%B9%A0%E7%9A%84%E7%AD%94%E6%A1%88">附录A 练习的答案</h1>
 
 <h2 id="Chapter1Answer">第一章 机器学习纵览</h2>
@@ -1874,6 +2021,17 @@ array<span class="token punctuation">(</span><span class="token punctuation">[</
 <li><a href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8F%98%E6%8D%A2">自定义变换</a></li>
 <li><a href="#%E7%89%B9%E5%BE%81%E7%BC%A9%E6%94%BE">特征缩放</a></li>
 <li><a href="#%E8%BD%AC%E6%8D%A2%E6%B5%81%E6%B0%B4%E7%BA%BF">转换流水线</a></li>
+</ul>
+</li>
+<li><a href="#%E9%80%89%E6%8B%A9%E5%92%8C%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B">选择和训练模型</a>
+<ul>
+<li><a href="#%E4%BD%BF%E7%94%A8%E8%AE%AD%E7%BB%83%E9%9B%86%E8%BF%9B%E8%A1%8C%E8%AE%AD%E7%BB%83%E5%92%8C%E8%AF%84%E4%BC%B0">使用训练集进行训练和评估</a></li>
+<li><a href="#%E9%80%9A%E8%BF%87%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81%E5%AE%9E%E7%8E%B0%E6%9B%B4%E5%A5%BD%E7%9A%84%E8%AF%84%E4%BC%B0">通过交叉验证实现更好的评估</a></li>
+</ul>
+</li>
+<li><a href="#%E8%B0%83%E4%BC%98%E4%BD%A0%E7%9A%84%E6%A8%A1%E5%9E%8B">调优你的模型</a>
+<ul>
+<li><a href="#%E7%BD%91%E6%A0%BC%E6%90%9C%E7%B4%A2">网格搜索</a></li>
 </ul>
 </li>
 </ul>

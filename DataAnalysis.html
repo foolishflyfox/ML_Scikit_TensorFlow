@@ -318,8 +318,101 @@ a <span class="token operator">=</span> imputer<span class="token punctuation">.
 df <span class="token operator">=</span> DataFrame<span class="token punctuation">(</span>a<span class="token punctuation">,</span> columns<span class="token operator">=</span>df<span class="token punctuation">.</span>columns<span class="token punctuation">)</span>
 </pre>
 <ul>
-<li>将标签数据进行转换</li>
+<li>将标签数据进行转换
+<ul>
+<li>将类别类型数据转化为整数型数据：<code>LabelEncoder</code></li>
+<li>将整数型数据转化为向量数据：<code>OneHotEncoder</code></li>
+<li>将类别类型数据转化为整数型数据：<code>LabelBinarizer</code></li>
 </ul>
+</li>
+</ul>
+<h2 id="20180201131731">如何自己编写转换器</h2>
+<ul>
+<li>设置成继承自<code>TransformMixin</code>(提供 <code>fit</code> 和 <code>transform</code> 相结合的 <code>fit_transform</code> 函数) 和 <code>BaseEstimator</code>(提供<code>get_params</code> 和 <code>set_params</code> 这对超参数相关的函数)；这两个类都在模块<code>sklearn.base</code>中；</li>
+<li>提供<code>fit</code>方法，参数有数据集，通常是 <code>fit(self, X, Y=None)</code>，写入训练的过程，将学到的参数写在一个以变量中；</li>
+<li>提供<code>transform</code> 方法，返回一个<code>np.narray</code> 类型数据；</li>
+</ul>
+<h2 class="mume-header" id="%E7%89%B9%E5%BE%81%E7%BC%A9%E6%94%BE">特征缩放</h2>
+
+<ul>
+<li><code>sklearn.preprocessing.MinMaxScaler</code> :用于进行归一化，可通过超参数 <code>feature_range</code> 设置最后所得到的范围；</li>
+<li><code>sklearn.preprocessing.StandardScaler</code> :用于数据的标准化；</li>
+</ul>
+<h2 class="mume-header" id="%E7%BB%84%E8%A3%85%E6%B5%81%E6%B0%B4%E7%BA%BF">组装流水线</h2>
+
+<ul>
+<li>
+<p><code>pipeline = sklearn.pipeline.Pipeline([('t1_name',transformer1), ('t2_name',transformer2), ...])</code>,其中构造函数的传入参数是一个<code>list</code>，每一个项都是一个<code>tuple</code>，其中第一个为名称，可以任意，第二个为对应的转换器实例；使用方法只需要 <code>pipeline.fit_transform(df)</code> 即可；<strong>注意：LabelEncoder和LabelBinarizer并不适用于Pipeline中，OneHotEncoder适合，解决方法，一种是将类别数据单独预处理，另一种是按<a href="#20180201131731">如何自己编写转换器</a>的方法对这两个类进行封装</strong></p>
+</li>
+<li>
+<p><code>full_pipeline = sklearn.pipeline.FeatureUnion([('pipe_name1', pipe1), ('pipe_name2', pipe2), ...])</code> :其中构造函数中的传入参数使一个 <code>list</code>，每一个项都是一个<code>tuple</code>，其中第一个为名称，可以任意，第二个为对应的流水线实例；使用时只需要 <code>full_pipeline.fit_transform(df)</code> 即可，返回的值是将多个输出合并在一些numpy 二维数组；</p>
+</li>
+</ul>
+<h2 class="mume-header" id="scikit-learn%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B">scikit-learn训练模型</h2>
+
+<h3 class="mume-header" id="%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B">线性模型</h3>
+
+<p>线性模型在 <code>sklearn.linear_model</code> 模块中。</p>
+<h4 class="mume-header" id="%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E6%A8%A1%E5%9E%8B">线性回归模型</h4>
+
+<p>线性回归模型为：<code>sklearn.linear_model.LinearRegression</code>。</p>
+<p>使用方法：</p>
+<ul>
+<li>创建模型的实例 ：<code>lin_reg = LinearRegression()</code></li>
+<li>训练实例：<code>lin_reg.fit(features, labels)</code></li>
+<li>预测：<code>lin_reg.predict(new_features)</code>，返回的是一个numpy.ndarray 类型数据；</li>
+</ul>
+<h4 class="mume-header" id="%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%AF%84%E4%BB%B7">线性回归模型的评价</h4>
+
+<p>对scikit-learn中的模型评估的函数在模块 <code>sklearn.metrics</code> 中。</p>
+<p>MSE 误差测量使用 <code>sklearn.metrics.mean_squared_error</code>，使用方法是：<code>mean_squared_error(labels, predictions)</code></p>
+<h3 class="mume-header" id="%E6%A0%91%E6%A8%A1%E5%9E%8B">树模型</h3>
+
+<p>树模型在 <code>sklearn.tree</code> 模块中。</p>
+<ul>
+<li>决策树回归：<code>sklearn.tree.DecisionTreeRegressor</code></li>
+</ul>
+<h3 class="mume-header" id="%E9%9B%86%E6%88%90%E6%96%B9%E6%B3%95">集成方法</h3>
+
+<p>集成方法在 <code>sklearn.ensemble</code> 模块中</p>
+<ul>
+<li>随机森林回归 ：<code>sklearn.ensemble.RandomForestRegressor</code></li>
+</ul>
+<h4 class="mume-header" id="%E5%86%B3%E7%AD%96%E6%A0%91%E5%9B%9E%E5%BD%92%E6%A8%A1%E5%9E%8B">决策树回归模型</h4>
+
+<p>决策树回归模型为：<code>sklearn.tree.DecisionTreeRegressor</code>。</p>
+<p>使用方法：</p>
+<ul>
+<li>创建模型的实例 ：<code>tree_reg = DecisionTreeRegressor()</code></li>
+<li>训练实例 ：<code>tree_reg.fit(features, labels)</code></li>
+<li>预测 ：<code>tree_reg.predict(new_features)</code></li>
+</ul>
+<h2 class="mume-header" id="%E8%AF%84%E4%BB%B7%E4%B8%80%E4%B8%AA%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%A5%BD%E5%9D%8F">评价一个模型的好坏</h2>
+
+<h3 class="mume-header" id="%E4%BD%BF%E7%94%A8%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81%E7%9A%84%E6%96%B9%E5%BC%8F">使用交叉验证的方式</h3>
+
+<p>主要用到的类是：<code>sklearn.model_selection.cross_val_score</code></p>
+<p>使用方法也很简单：<code>scores = cross_val_score(model_instance, X, y, scoring='mean_squared_error', cv=10)</code>，如此调用返回的是10-折交叉验证得到的负的MSE数组。</p>
+<h2 class="mume-header" id="%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BF%9D%E5%AD%98">模型的保存</h2>
+
+<p>常用的有Python自带的 <code>pickle</code> 模块与 <code>sklearn.externals.joblib</code>。</p>
+<h3 class="mume-header" id="%E7%94%A8-pickle-%E8%BF%9B%E8%A1%8C%E4%BF%9D%E5%AD%98">用 pickle 进行保存</h3>
+
+<pre class="language-python"><span class="token keyword">import</span> pickle
+pickle<span class="token punctuation">.</span>dump<span class="token punctuation">(</span>obj<span class="token punctuation">,</span> open<span class="token punctuation">(</span>filename_pkl<span class="token punctuation">,</span> <span class="token string">"wb"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># late ...</span>
+pickle<span class="token punctuation">.</span>load<span class="token punctuation">(</span>open<span class="token punctuation">(</span>filename_pkl<span class="token punctuation">,</span> <span class="token string">"rb"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</pre>
+<h3 class="mume-header" id="%E7%94%A8-externals">用 externals</h3>
+
+<p>用这种方法进行存储效率要比用 <code>pickle</code> 的要高；</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>externals <span class="token keyword">import</span> joblib
+joblib<span class="token punctuation">.</span>dump<span class="token punctuation">(</span>model<span class="token punctuation">,</span> filename_pkl<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># late</span>
+model_loaded <span class="token operator">=</span> joblib<span class="token punctuation">.</span>load<span class="token punctuation">(</span>filename_pkl<span class="token punctuation">)</span>
+</pre>
 
       </div>
       <div class="md-sidebar-toc"><ul>
@@ -332,6 +425,35 @@ df <span class="token operator">=</span> DataFrame<span class="token punctuation
 <li><a href="#%E5%AF%BB%E6%89%BE%E7%9B%B8%E5%85%B3%E6%80%A7">寻找相关性</a></li>
 <li><a href="#%E5%B1%9E%E6%80%A7%E4%B9%8B%E9%97%B4%E7%9A%84%E8%81%94%E5%90%88">属性之间的联合</a></li>
 <li><a href="#%E6%95%B0%E6%8D%AE%E6%B8%85%E7%90%86">数据清理</a></li>
+<li><a href="#%E7%89%B9%E5%BE%81%E7%BC%A9%E6%94%BE">特征缩放</a></li>
+<li><a href="#%E7%BB%84%E8%A3%85%E6%B5%81%E6%B0%B4%E7%BA%BF">组装流水线</a></li>
+<li><a href="#scikit-learn%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B">scikit-learn训练模型</a>
+<ul>
+<li><a href="#%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B">线性模型</a>
+<ul>
+<li><a href="#%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E6%A8%A1%E5%9E%8B">线性回归模型</a></li>
+<li><a href="#%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%AF%84%E4%BB%B7">线性回归模型的评价</a></li>
+</ul>
+</li>
+<li><a href="#%E6%A0%91%E6%A8%A1%E5%9E%8B">树模型</a></li>
+<li><a href="#%E9%9B%86%E6%88%90%E6%96%B9%E6%B3%95">集成方法</a>
+<ul>
+<li><a href="#%E5%86%B3%E7%AD%96%E6%A0%91%E5%9B%9E%E5%BD%92%E6%A8%A1%E5%9E%8B">决策树回归模型</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E8%AF%84%E4%BB%B7%E4%B8%80%E4%B8%AA%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%A5%BD%E5%9D%8F">评价一个模型的好坏</a>
+<ul>
+<li><a href="#%E4%BD%BF%E7%94%A8%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81%E7%9A%84%E6%96%B9%E5%BC%8F">使用交叉验证的方式</a></li>
+</ul>
+</li>
+<li><a href="#%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BF%9D%E5%AD%98">模型的保存</a>
+<ul>
+<li><a href="#%E7%94%A8-pickle-%E8%BF%9B%E8%A1%8C%E4%BF%9D%E5%AD%98">用 pickle 进行保存</a></li>
+<li><a href="#%E7%94%A8-externals">用 externals</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

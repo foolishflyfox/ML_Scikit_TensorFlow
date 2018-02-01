@@ -98,3 +98,99 @@ a = imputer.transform(df)
 df = DataFrame(a, columns=df.columns)
 ```
 - 将标签数据进行转换
+  - 将类别类型数据转化为整数型数据：`LabelEncoder`
+  - 将整数型数据转化为向量数据：`OneHotEncoder`
+  - 将类别类型数据转化为整数型数据：`LabelBinarizer`
+
+<h2 id="20180201131731">如何自己编写转换器</h2>
+
+- 设置成继承自`TransformMixin`(提供 `fit` 和 `transform` 相结合的 `fit_transform` 函数) 和 `BaseEstimator`(提供`get_params` 和 `set_params` 这对超参数相关的函数)；这两个类都在模块`sklearn.base`中；
+- 提供`fit`方法，参数有数据集，通常是 `fit(self, X, Y=None)`，写入训练的过程，将学到的参数写在一个以变量中；
+- 提供`transform` 方法，返回一个`np.narray` 类型数据；
+
+## 特征缩放
+
+- `sklearn.preprocessing.MinMaxScaler` :用于进行归一化，可通过超参数 `feature_range` 设置最后所得到的范围；
+- `sklearn.preprocessing.StandardScaler` :用于数据的标准化；
+
+## 组装流水线
+
+- `pipeline = sklearn.pipeline.Pipeline([('t1_name',transformer1), ('t2_name',transformer2), ...])`,其中构造函数的传入参数是一个`list`，每一个项都是一个`tuple`，其中第一个为名称，可以任意，第二个为对应的转换器实例；使用方法只需要 `pipeline.fit_transform(df)` 即可；**注意：LabelEncoder和LabelBinarizer并不适用于Pipeline中，OneHotEncoder适合，解决方法，一种是将类别数据单独预处理，另一种是按[如何自己编写转换器](#20180201131731)的方法对这两个类进行封装**
+
+- `full_pipeline = sklearn.pipeline.FeatureUnion([('pipe_name1', pipe1), ('pipe_name2', pipe2), ...])` :其中构造函数中的传入参数使一个 `list`，每一个项都是一个`tuple`，其中第一个为名称，可以任意，第二个为对应的流水线实例；使用时只需要 `full_pipeline.fit_transform(df)` 即可，返回的值是将多个输出合并在一些numpy 二维数组；
+
+## scikit-learn训练模型
+
+### 线性模型
+
+线性模型在 `sklearn.linear_model` 模块中。
+
+#### 线性回归模型
+
+线性回归模型为：`sklearn.linear_model.LinearRegression`。
+
+使用方法：
+- 创建模型的实例 ：`lin_reg = LinearRegression()`
+- 训练实例：`lin_reg.fit(features, labels)`
+- 预测：`lin_reg.predict(new_features)`，返回的是一个numpy.ndarray 类型数据；
+
+#### 线性回归模型的评价
+
+对scikit-learn中的模型评估的函数在模块 `sklearn.metrics` 中。
+
+MSE 误差测量使用 `sklearn.metrics.mean_squared_error`，使用方法是：`mean_squared_error(labels, predictions)`
+
+### 树模型
+
+树模型在 `sklearn.tree` 模块中。
+
+- 决策树回归：`sklearn.tree.DecisionTreeRegressor`
+
+### 集成方法
+
+集成方法在 `sklearn.ensemble` 模块中
+
+- 随机森林回归 ：`sklearn.ensemble.RandomForestRegressor`
+
+#### 决策树回归模型
+
+决策树回归模型为：`sklearn.tree.DecisionTreeRegressor`。
+
+使用方法：
+- 创建模型的实例 ：`tree_reg = DecisionTreeRegressor()`
+- 训练实例 ：`tree_reg.fit(features, labels)`
+- 预测 ：`tree_reg.predict(new_features)`
+
+## 评价一个模型的好坏
+
+### 使用交叉验证的方式
+
+主要用到的类是：`sklearn.model_selection.cross_val_score`
+
+使用方法也很简单：`scores = cross_val_score(model_instance, X, y, scoring='mean_squared_error', cv=10)`，如此调用返回的是10-折交叉验证得到的负的MSE数组。
+
+## 模型的保存
+
+常用的有Python自带的 `pickle` 模块与 `sklearn.externals.joblib`。
+
+### 用 pickle 进行保存
+
+```python
+import pickle
+pickle.dump(obj, open(filename_pkl, "wb"))
+
+# late ...
+pickle.load(open(filename_pkl, "rb"))
+```
+
+### 用 externals
+
+用这种方法进行存储效率要比用 `pickle` 的要高；
+
+```python
+from sklearn.externals import joblib
+joblib.dump(model, filename_pkl)
+
+# late
+model_loaded = joblib.load(filename_pkl)
+```

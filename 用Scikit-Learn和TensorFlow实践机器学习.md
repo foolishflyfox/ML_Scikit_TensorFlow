@@ -1465,7 +1465,41 @@ housing_num_tr = num_pipeline.fit_transform(housing_num)
 
 pipeline 所暴露的方法和最后一个评估器的方法相同。例如，最后的评估器是一个 `StandardScaler`，它也是一个转换器，那么对于传入的数据，我们可以通过`transform()`方法对其进行转换（当然也可以用`fit_transform()`来替代`fit()`和`transform()`这两步）。
 
-现在，你有一个处理数值型数据的流水线，你还需要应用`LabelBinarizer`处理类别值：该如何将这些变化都合并到同一个流水线中呢？Scikit-Learn 为这种情况提供了一个 `FeatureUnion` 的类。你交给它一个转换器组成的列表（可以是一个流水线方式组成的转换器），当他的`transform()` 函数被调用时，它会并行运行每一个转换器的`transform()`函数，等到他们都完成输出后，会将这些输出连接起来作为返回结果（当然，如果是调用`fit()`方法，它也将并行调用所有转换器的`fit()`方法）。一个完整的包含数值和类别属性的流水线构造方法如下：
+现在，你有一个处理数值型数据的流水线，你还需要应用`LabelBinarizer`处理类别值：该如何将这些变化都合并到同一个流水线中呢？Scikit-Learn 为这种情况提供了一个 `FeatureUnion` 的类。你交给它一个转换器组成的列表（可以是一个流水线方式组成的转换器），当它的`transform()` 函数被调用时，它会并行运行每一个转换器的`transform()`函数，等到他们都完成输出后，会将这些输出连接起来作为返回结果（当然，如果是调用`fit()`方法，它也将并行调用所有转换器的`fit()`方法）。
+
+> 注：这一节中下面部分的内容由于原书的顺序不太好，并且`LabelBinarizer`类的实例不能应用于Pipeline中，过对顺序于代码都做了调整；
+
+在这之前，我们先写一个用于选择器：它简单的通过选择需要的属性（数值或类别）对数据进行转换，丢弃剩下的数据，将 DataFrame 类型的结果转换为 NumPy 数组。在Scikit-Learn中没有处理Pandas DataFrame的方法，所以我们需要写一个简单的自定义转换器来完成这个任务：
+
+```python
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class DataFrameSelector(BaseEstimator, TransformerMixin):
+    def __init__(self, attrs):
+        self.attrs = attrs
+        pass
+    def fit(self, X, Y=None):
+        return self
+    def transform(self, X, y=None):
+        return X[self.attrs].values
+```
+> 检查 #3886 的拉请求，在其中介绍了一个 `ColumnTransformer` 类可以使指定属性的转换更加简单。你也可以运行pip3下载sklearn-pandas 获取 `DataFrameMapper`，一个与之相似的类。
+
+
+又因为`LabelBinarizer`和`LabelEncoder`并不适用于`Pipeline`(具体解释见[#3113 request](https://github.com/scikit-learn/scikit-learn/pull/3113))，所以我们需要重新对`LabelBinarizer`进行封装，使其可以被装入到`Pipeline`中；
+
+```python
+class CategoryBinarizer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self._binarizer = LabelBinarizer()
+    def fit(self, X, Y=None):
+        self._binarizer.fit(X)
+        return self
+    def transform(self, X, Y=None):
+        return self._binarizer.transform(X)
+```
+这里，我们通过对`LabelBinarizer`创建了一个新的类：`CategoryBinarizer`，现在就可以将我们的新类组装仅我们的流水线了：
+
 ```python
 from sklearn.pipeline import FeatureUnion
 
@@ -1481,43 +1515,183 @@ num_pipeline = Pipeline([
 
 cat_pipeline = Pipeline([
     ('selector', DataFrameSelector(cat_attribs)),
-    ('label_binarizer', LabelBinarizer()),
+    ('cat_binarizer', CategoryBinarizer()),
 ])
 
 full_pipeline = FeatureUnion(transformer_list=[
     ('num_pipeline', num_pipeline),
     ('cat_pipeline', cat_pipeline),
 ])
+housing_prepared = full_pipeline.fit_transform(housing)
+
+housing_prepared
 ```
-你可以非常简单地运行整个流水线：
+输出的结果为：
+```
+(16512, 16)
+array([[-1.15604281,  0.77194962,  0.74333089, ...,  0.        ,
+         0.        ,  0.        ],
+       [-1.17602483,  0.6596948 , -1.1653172 , ...,  0.        ,
+         0.        ,  0.        ],
+       [ 1.18684903, -1.34218285,  0.18664186, ...,  0.        ,
+         0.        ,  1.        ],
+       ...,
+       [ 1.58648943, -0.72478134, -1.56295222, ...,  0.        ,
+         0.        ,  0.        ],
+       [ 0.78221312, -0.85106801,  0.18664186, ...,  0.        ,
+         0.        ,  0.        ],
+       [-1.43579109,  0.99645926,  1.85670895, ...,  0.        ,
+         1.        ,  0.        ]])
+```
+
+### 选择和训练模型
+
+最后，你已经完成了对这个问题的设计，你得到了数据、对它进行了探索，你通过采样将数据分成了训练集和测试集，并且你实现了转换流水线自动化进行数据清理以及为后续的机器学习算法进行了数据的预处理。你现在可以开始选择、训练机器学习模型了。
+
+#### 使用训练集进行训练和评估
+
+得益于之前我们所做的工作，接下来要做的事情将要比你想象的要更简单。让我们先训练一个线性回归模型，就像我们之前的章节所做的工作：
+
 ```python
->>> housing_prepared = full_pipeline.fit_transform(housing)
->>> housing_prepared
+from sklearn.linear_model import LinearRegression
 
-array([[ 0.73225807, -0.67331551, 0.58426443, ..., 0. ,
-          0.        ,  0.        ],
-        [-0.99102923,  1.63234656, -0.92655887, ...,  0.        ,
-          0.        ,  0.        ],
-        [...]
->>> housing_prepared.shape
-(16513, 17)
+lin_reg = LinearRegression()
+lin_reg.fit(housing_prepared, housing_labels)
 ```
-每个子流水线都以选择功能转换器开始：它简单的通过选择需要的属性（数值或类别）对数据进行转换，丢弃剩下的数据，将 DataFrame 类型的结果转换为 NumPy 数组。在Scikit-Learn中没有处理Pandas DataFrame的方法，所以我们需要写一个简单的自定义转换器来完成这个任务：
 
-> 但检查 #3886 的拉请求，在其中介绍了一个 `ColumnTransformer` 类可以使指定属性的转换更加简单。你也可以运行pip3下载sklearn-pandas 获取 `DataFrameMapper`，一个与之相似的类。
+好了，你现在已经完成了一个可以工作的线性回归模型。让我们在训练集中选择一些实例尝试使用该模型：
+```python
+some_data = housing[:5]
+some_labels = housing_labels.iloc[:5]
+some_data_prepared = full_pipeline.transform(some_data)
+print("Predictions:\t", lin_reg.predict(some_data_prepared).astype("int"))
+print("Labels:\t\t", some_labels.astype(int).values)
+```
+输出为：
+```
+Predictions:	 [210644 317768 210956  59218 189747]
+Labels:		 [286600 340600 196900  46300 254500]
+```
+
+这说明模型已经工作了，虽然预测的结果不是那么准确。让我们使用 Scikit-Learn 提供的`mean_squared_error`函数测量这个回归模型在所有训练集上的 RMSE 值：
+```python
+from sklearn.metrics import mean_squared_error
+housing_predictions = lin_reg.predict(housing_prepared)
+lin_mse = mean_squared_error(housing_labels, housing_predictions)
+lin_rmse = np.sqrt(lin_mse)
+lin_rmse
+```
+输出为：`68628.198198489234`
+
+好了，至少我们做出了一些东西，比什么都没有要要一些。但这的确不是一个好的分数：大多数区的中位房价是在 120000 ~ 265000 美元之间，所以一个误差达到 68628美元 的预测的确不让人满意。
+
+这是一个模型欠拟合于训练集数据的例子；如果发生了这种情况，说明了特征向量并没有提供足够多的信息用于做出好的预测，或者说是模型本身不够强大。正如我们之前章节中所说的，解决欠拟合问题的主要手段是：选址一个更强大的模型，给训练算法提供更好的特征向量，减少读模型的限制。该模型没有规则化，所以最后一个选项排除。你可以尝试增加更多的特性（某个区人口的历史记录），但首先让我们尝试一个更加复杂的模型。
+
+让我们训练一个决策树回归。这是一个强大的模型，有能力找到数据中复杂的非线性关系（决策树将在[第六章](#20180201164000)进行具体讲解）。下面的代码看起来应该比较熟悉：
 
 ```python
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.tree import DecisionTreeRegressor
 
-class DataFrameSelector(BaseEstimator, TransformerMixin):
-    def __init__(self, attribute_names):
-        self.attribute_names = attribute_names
-    def fit(self, X, y=None):
-        return self
-    def transform(self, X):
-        return X[self.attribute_names].values
+tree_reg = DecisionTreeRegressor()
+tree_reg.fit(housing_prepared, housing_labels)
 ```
 
+现在，这个模型已经完成训练了，让我们对他在训练集上进行评估：
+```python
+housing_predictions = tree_reg.predict(housing_prepared)
+tree_mse = mean_squared_error(housing_labels, housing_predictions)
+tree_rmse = np.square(lin_mse)
+tree_rmse
+```
+输出结果为：`0.0`
+
+等一下，发生了什么情况！？完全没有误差，那这个模型是不是真的就是完美的了呢？当然不是，这个模型很可能发生了严重的过拟合。你怎么确定？正如我们之前所说的，在你得到一个令你有信心的模型之前，不要去动测试集，所以你需要将一部分的训练集数据划分出来用于模型的验证。
+
+#### 通过交叉验证实现更好的评估
+
+一种验证的方式是：通过函数`train_test_split`函数将训练集分成更小的训练集和一个确认集，接着使用这个更小的训练集进行训练，并使用确认集进行评估。这里有一点工作量，但在原理上没有什么困难，也能工作得相当不错。
+
+另一种相当好的替代方案是使用 Scikit-Learn 的 *交叉验证* 功能。下面的代码使用的是 k-折交叉验证：它随机将训练集分成10个不同的子集，称为 *折(fold)*，之后，将决策树模型训练10次，每次讲其中1个子集选为确认集，另外9个子集作为训练集。结果是得到包含有10个评价结果的一个数组：
+```python
+from sklearn.model_selection import cross_val_score
+scores = cross_val_score(tree_reg, housing_prepared, housing_labels,
+                        scoring="neg_mean_squared_error", cv=10)
+rmse_scores = np.sqrt(-scores)
+```
+![warning](./asset/warning.png) Scikit-Learn 中用于交叉验证计算的函数属于效用函数(最大表示效果越好)而不是代价函数(越小表示效果越好)，所以打分函数实际上与 MSE 更好相反（是一个负数），这也就是第三行的代码在计算平方根时需要使用`-score`的原因了。
+
+让我们来看看效果：
+```python
+def display_scores(scores):
+    print("Scores:", scores.astype("int"))
+    print("Mean:", scores.mean())
+    print("Standard deviation:", scores.std())
+display_scores(rmse_scores)
+```
+结果为：
+```
+Scores: [68805 67048 70926 69779 70477 75976 68546 70374 77214 71554]
+Mean: 71070.3646624
+Standard deviation: 3037.24756141
+```
+现在，决策数看起来没有它之前的好。甚至比线性回归模型都要差！注意，交叉验证不仅使你可以评估你的模型的性能，也能对评估方法本身做出评价(通过标准差 Standard deviation)。但是，交叉验证需要多次训练、计算代价，所以它总是可行。
+
+让我们看看使用线性回归模型的交叉验证结果：
+```python
+lin_scores = cross_val_score(lin_reg, housing_prepared, housing_labels,
+                            scoring="neg_mean_squared_error", cv=10)
+lin_rmse = np.sqrt(-lin_scores)
+display_scores(lin_rmse)
+```
+输出结果为：
+```
+Scores: [66782 66960 70347 74739 68031 71193 64969 68281 71552 67665]
+Mean: 69052.4613635
+Standard deviation: 2731.6740018
+```
+我们的猜测是正确的。决策树模型的过拟合太严重的，其表现的性能甚至比线性回归模型都要差。
+
+让我们尝试最后一个模型：RandomForestRegression。具体的内容我们将在[第7章](#20180201213244)中具体介绍，简单来说，随机森林就是随机地在数据子集上训练多棵决策树，之后，取多个随机数预测结果的平均值作为预测值。在许多模型的基础上建立的一个模型的学习方法称为 *集成学习*，这通常是使机器学习表现得更好的常用方法。实现代码如下：
+```python
+from sklearn.ensemble import RandomForestRegressor
+forest_reg = RandomForestRegressor()
+forest_reg.fit(housing_prepared, housing_labels)
+forest_rmse = mean_squared_error(forest_reg.predict(housing_prepared),
+                                housing_labels)**0.5
+forest_scores = cross_val_score(forest_reg, housing_prepared, housing_labels,
+                               scoring="neg_mean_squared_error", cv=10)
+forest_rmse_scores = (-forest_scores)**0.5
+print("forest_rmse:", forest_rmse)
+display_scores(forest_rmse_scores)
+```
+输出为：
+```
+forest_rmse: 22227.2941501
+Scores: [50826 49926 51863 54311 52638 55922 51803 50674 55377 52619]
+Mean: 52596.4826457
+Standard deviation: 1919.83897829
+```
+看起来的确比前两种模型更好：随机森林看起来非常理想。然而，需要注意的是在训练集上的 RMSE 值仍然要比在确认集上的 RMSE 要小很多，这意味着该模型在训练集上仍然存在过拟合。解决过拟合的一种解决方案是简化模型，限制其复杂度(通过正规化)，或者是使用更多的训练数据。但在你想继续在随机森林这条路上走得更远之前，你最好还是先尝试一下其他类别的一些机器学习算法（比如使用不同核的多种向量机模型，或者是神经网络等等），不要花太多时间用于调整参数，我们现阶段的目标是得到一个表现性能良好的模型名的列表（大概需要2~5个模型）。
+
+![suggest](./asset/suggest.png)你应当保存所有你实验过的模型，这样在之后，你能非常简单地还原到你想要的模型。保存的内容包括：模型的超参数和训练得到的参数，以及交叉验证的分数、真实的预测结果等。这使你可以非常简单的比较不同类型模型的得分，以及它们的错误数。你可以通过 Python 的 `pickle` 模块或 `sklearn.externals.joblib`模块 非常方便地进行保存。其中 `sklearn.externals.joblib`对于序列化大型的NumPy数组效率更高。
+
+```python
+from sklearn.externals import joblib
+joblib.dump(my_model, "my_model.pkl")
+
+# 之后 ...
+my_model_loaded = joblib.load("my_model.pkl")
+```
+
+### 调优你的模型
+
+假定你现在已经有了一个理性模型小列表。你现在需要做的是对它们进行调优。让我们看看你可以以哪些方式完成。
+
+#### 网格搜索
+
+<h2 id="20180201164000">第六章 决策树</h2>
+
+<h2 id="20180201213244">第七章 集成学习与随机深林</h2>
 
 # 附录A 练习的答案
 

@@ -88,6 +88,7 @@ Pandas 模块是Python进行数据处理的利器。
 - `fillna` :将值为 NaN 的元素换成指定数值；
 - `drop` :将指定的行/列删除(对于DataFrame),删除指定的元素(对Series)
 - `dropna` :对 DataFrame 将含NaN的行删除，可以通过指定`subset`设置需要检查的列；Series删除NaN的元素
+- `astype` :将 DataFrame 或 Series 中的数据都转换成特定的类型，注意如果在其中存在不能转换的元素，那将发生一个错误；
 
 ### DataFrame
 
