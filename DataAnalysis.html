@@ -393,6 +393,14 @@ df <span class="token operator">=</span> DataFrame<span class="token punctuation
 
 <p>主要用到的类是：<code>sklearn.model_selection.cross_val_score</code></p>
 <p>使用方法也很简单：<code>scores = cross_val_score(model_instance, X, y, scoring='mean_squared_error', cv=10)</code>，如此调用返回的是10-折交叉验证得到的负的MSE数组。</p>
+<h3 class="mume-header" id="%E7%BD%91%E6%A0%BC%E6%90%9C%E7%B4%A2%E6%9C%80%E4%BD%B3%E7%9A%84%E8%B6%85%E5%8F%82%E6%95%B0%E7%BB%84%E5%90%88">网格搜索最佳的超参数组合</h3>
+
+<p>使用 <code>sklearn.model_selection</code> 中的 <code>GridSearchCV</code> 可以进行自动化的最佳超参数选择。</p>
+<p>使用方法：</p>
+<ul>
+<li>创建一个 <code>GridSearchCV</code> 实例：<code>grid_search = GridSearchCV(model, param_grid, cv=5, scoring='neg_mean_squared_error')</code></li>
+<li>执行训练：<code>grid_search.fit(features, labels)</code></li>
+</ul>
 <h2 class="mume-header" id="%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BF%9D%E5%AD%98">模型的保存</h2>
 
 <p>常用的有Python自带的 <code>pickle</code> 模块与 <code>sklearn.externals.joblib</code>。</p>
@@ -446,6 +454,7 @@ model_loaded <span class="token operator">=</span> joblib<span class="token punc
 <li><a href="#%E8%AF%84%E4%BB%B7%E4%B8%80%E4%B8%AA%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%A5%BD%E5%9D%8F">评价一个模型的好坏</a>
 <ul>
 <li><a href="#%E4%BD%BF%E7%94%A8%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81%E7%9A%84%E6%96%B9%E5%BC%8F">使用交叉验证的方式</a></li>
+<li><a href="#%E7%BD%91%E6%A0%BC%E6%90%9C%E7%B4%A2%E6%9C%80%E4%BD%B3%E7%9A%84%E8%B6%85%E5%8F%82%E6%95%B0%E7%BB%84%E5%90%88">网格搜索最佳的超参数组合</a></li>
 </ul>
 </li>
 <li><a href="#%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BF%9D%E5%AD%98">模型的保存</a>

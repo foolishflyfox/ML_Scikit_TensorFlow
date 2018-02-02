@@ -169,6 +169,14 @@ MSE 误差测量使用 `sklearn.metrics.mean_squared_error`，使用方法是：
 
 使用方法也很简单：`scores = cross_val_score(model_instance, X, y, scoring='mean_squared_error', cv=10)`，如此调用返回的是10-折交叉验证得到的负的MSE数组。
 
+### 网格搜索最佳的超参数组合
+
+使用 `sklearn.model_selection` 中的 `GridSearchCV` 可以进行自动化的最佳超参数选择。
+
+使用方法：
+- 创建一个 `GridSearchCV` 实例：`grid_search = GridSearchCV(model, param_grid, cv=5, scoring='neg_mean_squared_error')`
+- 执行训练：`grid_search.fit(features, labels)`
+
 ## 模型的保存
 
 常用的有Python自带的 `pickle` 模块与 `sklearn.externals.joblib`。

@@ -333,6 +333,9 @@ code.language-yaml {
 <li><a href="#%E8%B0%83%E4%BC%98%E4%BD%A0%E7%9A%84%E6%A8%A1%E5%9E%8B">调优你的模型</a>
 <ul>
 <li><a href="#%E7%BD%91%E6%A0%BC%E6%90%9C%E7%B4%A2">网格搜索</a></li>
+<li><a href="#%E9%9A%8F%E6%9C%BA%E9%80%89%E6%8B%A9">随机选择</a></li>
+<li><a href="#%E9%9B%86%E6%88%90%E6%96%B9%E6%B3%95">集成方法</a></li>
+<li><a href="#%E5%88%86%E6%9E%90%E6%9C%80%E5%A5%BD%E6%A8%A1%E5%9E%8B%E6%9C%BA%E5%99%A8%E9%94%99%E8%AF%AF">分析最好模型机器错误</a></li>
 </ul>
 </li>
 </ul>
@@ -1707,8 +1710,86 @@ my_model_loaded <span class="token operator">=</span> joblib<span class="token p
 </pre>
 <h3 class="mume-header" id="%E8%B0%83%E4%BC%98%E4%BD%A0%E7%9A%84%E6%A8%A1%E5%9E%8B">调优你的模型</h3>
 
-<p>假定你现在已经有了一个理性模型小列表。你现在需要做的是对它们进行调优。让我们看看你可以以哪些方式完成。</p>
+<p>假定你现在已经有了一个理想模型小列表。你现在需要做的是对它们进行调优。让我们看看你可以以哪些方式完成。</p>
 <h4 class="mume-header" id="%E7%BD%91%E6%A0%BC%E6%90%9C%E7%B4%A2">网格搜索</h4>
+
+<p>一种方式是手动地去修改超参数的值，直到你找到一组能使模型性能很好的超参数值。这是一项非常无聊的工作，而且你也可能没有时间来尝试很多的组超参数。</p>
+<p>那么，你可以使用 Scikit-Learn 中的<code>GridSearchCV</code> 来帮助你进行寻找。你只需要告诉它哪些超参数你想要尝试一下，你想要得到的是什么数据，之后它就会通过交叉验证的方式评估所有可能的超参数组合。比如说，下面的代码就是为 <code>RandomForestRegressor</code> 寻找最佳的超参数组合。</p>
+<pre class="language-python"><span class="token keyword">from</span>  sklearn<span class="token punctuation">.</span>model_selection <span class="token keyword">import</span> GridSearchCV
+
+param_grid <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span><span class="token string">"n_estimators"</span><span class="token punctuation">:</span><span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">30</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">'max_features'</span><span class="token punctuation">:</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">8</span><span class="token punctuation">]</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span><span class="token string">'bootstrap'</span><span class="token punctuation">:</span><span class="token punctuation">[</span><span class="token boolean">False</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">'n_estimators'</span><span class="token punctuation">:</span><span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">'max_features'</span><span class="token punctuation">:</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">}</span>
+<span class="token punctuation">]</span>
+
+forest_reg <span class="token operator">=</span> RandomForestRegressor<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+grid_search <span class="token operator">=</span> GridSearchCV<span class="token punctuation">(</span>forest_reg<span class="token punctuation">,</span> param_grid<span class="token punctuation">,</span> cv<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">,</span>
+                          scoring<span class="token operator">=</span><span class="token string">"neg_mean_squared_error"</span><span class="token punctuation">)</span>
+
+grid_search<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>housing_prepared<span class="token punctuation">,</span> housing_labels<span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/suggest.png" alt="suggest"> 当你不知道超参数应该如何设置时，一种简单的方法是尝试使用10的连续次幂(如果你希望进行更细粒度的搜索，可以选择更小的值，正如上面例子中所给出的 <code>n_estimators</code> 超参数)。</p>
+<p>变量<code>param_grid</code>告诉 Scikit-Learn 第一次评估是的超参数组合供 3 × 4 = 12 组，由字典中第一个值决定(<code>n_estimators</code>中有3个数，<code>max_features</code>中有4个数)，现在不要担心不理解这些超参数的含义，它们将在<a href="#20180201213244">第七章</a>中进行详细的讲解；之后尝试字典中第二个元素所指定的 2 × 3 = 6 组超参数，但这一次 <code>bootstrap</code> 超参数被设置为False（第一次使用默认的True）。</p>
+<p>总而言之，这个网格搜索将会探索 12 + 6 = 18 组的随机森林超参数组合，而且每个模型都会进行5次训练（因为我们指定了 <code>cv=5</code>，使用 5-折交叉验证）。换句话说，这个过程一共需要进行 18 × 5 = 90 次的训练！这可能需要较长的时间，但在完成之后，你可以得到如下的最佳超参数组合：</p>
+<pre class="language-python"><span class="token operator">>></span><span class="token operator">></span> grid_search<span class="token punctuation">.</span>best_params_
+
+<span class="token punctuation">{</span><span class="token string">'max_features'</span><span class="token punctuation">:</span> <span class="token number">8</span><span class="token punctuation">,</span> <span class="token string">'n_estimators'</span><span class="token punctuation">:</span> <span class="token number">30</span><span class="token punctuation">}</span>`
+</pre>
+<p><img src="./asset/suggest.png" alt="suggest">因为30是 <code>n_estimators</code> 超参数表中的最大值，你应该使用更高的值再进行尝试，也许性能还能提供。</p>
+<p>你也可以直接得到训练中最好的模型：</p>
+<pre class="language-python"><span class="token operator">>></span><span class="token operator">></span> grid_search<span class="token punctuation">.</span>best_estimator_
+
+RandomForestRegressor<span class="token punctuation">(</span>bootstrap<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> criterion<span class="token operator">=</span><span class="token string">'mse'</span><span class="token punctuation">,</span> max_depth<span class="token operator">=</span>None<span class="token punctuation">,</span>
+           max_features<span class="token operator">=</span><span class="token number">8</span><span class="token punctuation">,</span> max_leaf_nodes<span class="token operator">=</span>None<span class="token punctuation">,</span> min_impurity_decrease<span class="token operator">=</span><span class="token number">0.0</span><span class="token punctuation">,</span>
+           min_impurity_split<span class="token operator">=</span>None<span class="token punctuation">,</span> min_samples_leaf<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span>
+           min_samples_split<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> min_weight_fraction_leaf<span class="token operator">=</span><span class="token number">0.0</span><span class="token punctuation">,</span>
+           n_estimators<span class="token operator">=</span><span class="token number">30</span><span class="token punctuation">,</span> n_jobs<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> oob_score<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> random_state<span class="token operator">=</span>None<span class="token punctuation">,</span>
+           verbose<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span> warm_start<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/note.png" alt="note">如果 <code>GridSearchCV</code> 被初始化为 <code>refit=True</code>（默认情况），那么在它用交叉验证的方式找到最佳的模型之后，它会使用全部训练集中的数据再次进行训练，因为通常来说，越多的数据参与到训练中，最后得到的模型性能将会越好。</p>
+<p>当然，对所有超参数组合的测试分数也是可以知道的：</p>
+<pre class="language-python">cvres <span class="token operator">=</span> grid_search<span class="token punctuation">.</span>cv_results_
+<span class="token keyword">for</span> mean_score<span class="token punctuation">,</span> params <span class="token keyword">in</span> zip<span class="token punctuation">(</span>cvres<span class="token punctuation">[</span><span class="token string">'mean_test_score'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> cvres<span class="token punctuation">[</span><span class="token string">'params'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span><span class="token operator">-</span>mean_score<span class="token punctuation">)</span><span class="token punctuation">,</span> params<span class="token punctuation">)</span>
+</pre>
+<p>结果为：</p>
+<pre class="language-">65091.7935781 {&apos;max_features&apos;: 2, &apos;n_estimators&apos;: 3}
+55689.5914692 {&apos;max_features&apos;: 2, &apos;n_estimators&apos;: 10}
+52769.8469738 {&apos;max_features&apos;: 2, &apos;n_estimators&apos;: 30}
+59955.703044 {&apos;max_features&apos;: 4, &apos;n_estimators&apos;: 3}
+52871.9624427 {&apos;max_features&apos;: 4, &apos;n_estimators&apos;: 10}
+50847.549027 {&apos;max_features&apos;: 4, &apos;n_estimators&apos;: 30}
+58586.288279 {&apos;max_features&apos;: 6, &apos;n_estimators&apos;: 3}
+52292.039927 {&apos;max_features&apos;: 6, &apos;n_estimators&apos;: 10}
+50031.952161 {&apos;max_features&apos;: 6, &apos;n_estimators&apos;: 30}
+57646.3484559 {&apos;max_features&apos;: 8, &apos;n_estimators&apos;: 3}
+51508.9126716 {&apos;max_features&apos;: 8, &apos;n_estimators&apos;: 10}
+49787.3879945 {&apos;max_features&apos;: 8, &apos;n_estimators&apos;: 30}
+61571.9872669 {&apos;bootstrap&apos;: False, &apos;max_features&apos;: 2, &apos;n_estimators&apos;: 3}
+54086.1895419 {&apos;bootstrap&apos;: False, &apos;max_features&apos;: 2, &apos;n_estimators&apos;: 10}
+60746.9603265 {&apos;bootstrap&apos;: False, &apos;max_features&apos;: 3, &apos;n_estimators&apos;: 3}
+52646.1026445 {&apos;bootstrap&apos;: False, &apos;max_features&apos;: 3, &apos;n_estimators&apos;: 10}
+59167.8094919 {&apos;bootstrap&apos;: False, &apos;max_features&apos;: 4, &apos;n_estimators&apos;: 3}
+52159.2933711 {&apos;bootstrap&apos;: False, &apos;max_features&apos;: 4, &apos;n_estimators&apos;: 10}
+</pre>
+<p>在这个例子中，我们最佳的解决方案是取超参数 <code>max_features</code> 为8，超参数 <code>n_estimators</code> 取30。这种组合的 RMSE 值为 49787，比你之前用默认超参数所得到的结果 52596 要好一些。恭喜，你已经完成了对模型超参数的调优！</p>
+<p><img src="./asset/suggest.png" alt="suggest">不要忘了，你可以在数据预处理阶段就可以准备一些超参数。比如说，你不确定是否需要增加某个特征（例如，在是否要在 <code>CombinedAttribute</code> 转换器中使用 <code>add_bedrooms_per_room</code> 这个超参数）。对于自动化找到处理离群点的最佳方式、确定是否要选择某个属性等都非常简单。</p>
+<h4 class="mume-header" id="%E9%9A%8F%E6%9C%BA%E9%80%89%E6%8B%A9">随机选择</h4>
+
+<p>网格搜索的方式对于探索相关的一些超参数组合非常方便（像我们上一个例子），但是当超参数空间非常大时，最好用 <code>RandomizedSearchCV</code> 替代。这个类的使用方式和 <code>GridSearchCV</code> 非常类似，但并不是参数所有可能的组合，它在每个迭代周期只是随机选出一组超参数的组合，一共迭代用户指定的迭代次数。这种方式有两个好处：</p>
+<ul>
+<li>
+<p>如果你指定迭代次数为1000，那么每个超参数都会探索1000个不同的值（而不是像网格搜索中的仅仅指定的少量值）；</p>
+</li>
+<li>
+<p>你可以通过设置迭代次数对选择超参数的计算量进行控制；</p>
+</li>
+</ul>
+<h4 class="mume-header" id="%E9%9B%86%E6%88%90%E6%96%B9%E6%B3%95">集成方法</h4>
+
+<p>另一种对你的系统进行调优的方式是对所有性能好的模型进行集成。集成后的系统通常会比它们各自运行的性能要好（就像随机森林的性能要比单独的决策树好），特别是独立的模型产生的错误类型不同的情况下。我们将在<a href="#20180201213244">第七章</a>中讲解更多过于集成的内容。</p>
+<h4 class="mume-header" id="%E5%88%86%E6%9E%90%E6%9C%80%E5%A5%BD%E6%A8%A1%E5%9E%8B%E6%9C%BA%E5%99%A8%E9%94%99%E8%AF%AF">分析最好模型机器错误</h4>
 
 <h2 id="20180201164000">第六章 决策树</h2>
 <h2 id="20180201213244">第七章 集成学习与随机深林</h2>
@@ -2032,6 +2113,9 @@ my_model_loaded <span class="token operator">=</span> joblib<span class="token p
 <li><a href="#%E8%B0%83%E4%BC%98%E4%BD%A0%E7%9A%84%E6%A8%A1%E5%9E%8B">调优你的模型</a>
 <ul>
 <li><a href="#%E7%BD%91%E6%A0%BC%E6%90%9C%E7%B4%A2">网格搜索</a></li>
+<li><a href="#%E9%9A%8F%E6%9C%BA%E9%80%89%E6%8B%A9">随机选择</a></li>
+<li><a href="#%E9%9B%86%E6%88%90%E6%96%B9%E6%B3%95">集成方法</a></li>
+<li><a href="#%E5%88%86%E6%9E%90%E6%9C%80%E5%A5%BD%E6%A8%A1%E5%9E%8B%E6%9C%BA%E5%99%A8%E9%94%99%E8%AF%AF">分析最好模型机器错误</a></li>
 </ul>
 </li>
 </ul>

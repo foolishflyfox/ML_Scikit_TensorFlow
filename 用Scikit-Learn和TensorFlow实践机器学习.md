@@ -1685,9 +1685,98 @@ my_model_loaded = joblib.load("my_model.pkl")
 
 ### 调优你的模型
 
-假定你现在已经有了一个理性模型小列表。你现在需要做的是对它们进行调优。让我们看看你可以以哪些方式完成。
+假定你现在已经有了一个理想模型小列表。你现在需要做的是对它们进行调优。让我们看看你可以以哪些方式完成。
 
 #### 网格搜索
+
+一种方式是手动地去修改超参数的值，直到你找到一组能使模型性能很好的超参数值。这是一项非常无聊的工作，而且你也可能没有时间来尝试很多的组超参数。
+
+那么，你可以使用 Scikit-Learn 中的`GridSearchCV` 来帮助你进行寻找。你只需要告诉它哪些超参数你想要尝试一下，你想要得到的是什么数据，之后它就会通过交叉验证的方式评估所有可能的超参数组合。比如说，下面的代码就是为 `RandomForestRegressor` 寻找最佳的超参数组合。
+
+```python
+from  sklearn.model_selection import GridSearchCV
+
+param_grid = [
+    {"n_estimators":[3, 10, 30], 'max_features':[2,4,6,8]},
+    {'bootstrap':[False], 'n_estimators':[3,10], 'max_features':[2,3,4]}
+]
+
+forest_reg = RandomForestRegressor()
+
+grid_search = GridSearchCV(forest_reg, param_grid, cv=5,
+                          scoring="neg_mean_squared_error")
+
+grid_search.fit(housing_prepared, housing_labels)
+```
+![suggest](./asset/suggest.png) 当你不知道超参数应该如何设置时，一种简单的方法是尝试使用10的连续次幂(如果你希望进行更细粒度的搜索，可以选择更小的值，正如上面例子中所给出的 `n_estimators` 超参数)。
+
+变量`param_grid`告诉 Scikit-Learn 第一次评估是的超参数组合供 3 × 4 = 12 组，由字典中第一个值决定(`n_estimators`中有3个数，`max_features`中有4个数)，现在不要担心不理解这些超参数的含义，它们将在[第七章](#20180201213244)中进行详细的讲解；之后尝试字典中第二个元素所指定的 2 × 3 = 6 组超参数，但这一次 `bootstrap` 超参数被设置为False（第一次使用默认的True）。
+
+总而言之，这个网格搜索将会探索 12 + 6 = 18 组的随机森林超参数组合，而且每个模型都会进行5次训练（因为我们指定了 `cv=5`，使用 5-折交叉验证）。换句话说，这个过程一共需要进行 18 × 5 = 90 次的训练！这可能需要较长的时间，但在完成之后，你可以得到如下的最佳超参数组合：
+```python
+>>> grid_search.best_params_
+
+{'max_features': 8, 'n_estimators': 30}`
+```
+![suggest](./asset/suggest.png)因为30是 `n_estimators` 超参数表中的最大值，你应该使用更高的值再进行尝试，也许性能还能提供。
+
+你也可以直接得到训练中最好的模型：
+```python
+>>> grid_search.best_estimator_
+
+RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None,
+           max_features=8, max_leaf_nodes=None, min_impurity_decrease=0.0,
+           min_impurity_split=None, min_samples_leaf=1,
+           min_samples_split=2, min_weight_fraction_leaf=0.0,
+           n_estimators=30, n_jobs=1, oob_score=False, random_state=None,
+           verbose=0, warm_start=False)
+```
+
+![note](./asset/note.png)如果 `GridSearchCV` 被初始化为 `refit=True`（默认情况），那么在它用交叉验证的方式找到最佳的模型之后，它会使用全部训练集中的数据再次进行训练，因为通常来说，越多的数据参与到训练中，最后得到的模型性能将会越好。
+
+当然，对所有超参数组合的测试分数也是可以知道的：
+```python
+cvres = grid_search.cv_results_
+for mean_score, params in zip(cvres['mean_test_score'], cvres['params']):
+    print(np.sqrt(-mean_score), params)
+```
+结果为：
+```
+65091.7935781 {'max_features': 2, 'n_estimators': 3}
+55689.5914692 {'max_features': 2, 'n_estimators': 10}
+52769.8469738 {'max_features': 2, 'n_estimators': 30}
+59955.703044 {'max_features': 4, 'n_estimators': 3}
+52871.9624427 {'max_features': 4, 'n_estimators': 10}
+50847.549027 {'max_features': 4, 'n_estimators': 30}
+58586.288279 {'max_features': 6, 'n_estimators': 3}
+52292.039927 {'max_features': 6, 'n_estimators': 10}
+50031.952161 {'max_features': 6, 'n_estimators': 30}
+57646.3484559 {'max_features': 8, 'n_estimators': 3}
+51508.9126716 {'max_features': 8, 'n_estimators': 10}
+49787.3879945 {'max_features': 8, 'n_estimators': 30}
+61571.9872669 {'bootstrap': False, 'max_features': 2, 'n_estimators': 3}
+54086.1895419 {'bootstrap': False, 'max_features': 2, 'n_estimators': 10}
+60746.9603265 {'bootstrap': False, 'max_features': 3, 'n_estimators': 3}
+52646.1026445 {'bootstrap': False, 'max_features': 3, 'n_estimators': 10}
+59167.8094919 {'bootstrap': False, 'max_features': 4, 'n_estimators': 3}
+52159.2933711 {'bootstrap': False, 'max_features': 4, 'n_estimators': 10}
+```
+在这个例子中，我们最佳的解决方案是取超参数 `max_features` 为8，超参数 `n_estimators` 取30。这种组合的 RMSE 值为 49787，比你之前用默认超参数所得到的结果 52596 要好一些。恭喜，你已经完成了对模型超参数的调优！
+
+![suggest](./asset/suggest.png)不要忘了，你可以在数据预处理阶段就可以准备一些超参数。比如说，你不确定是否需要增加某个特征（例如，在是否要在 `CombinedAttribute` 转换器中使用 `add_bedrooms_per_room` 这个超参数）。对于自动化找到处理离群点的最佳方式、确定是否要选择某个属性等都非常简单。
+
+#### 随机选择
+
+网格搜索的方式对于探索相关的一些超参数组合非常方便（像我们上一个例子），但是当超参数空间非常大时，最好用 `RandomizedSearchCV` 替代。这个类的使用方式和 `GridSearchCV` 非常类似，但并不是参数所有可能的组合，它在每个迭代周期只是随机选出一组超参数的组合，一共迭代用户指定的迭代次数。这种方式有两个好处：
+- 如果你指定迭代次数为1000，那么每个超参数都会探索1000个不同的值（而不是像网格搜索中的仅仅指定的少量值）；
+
+- 你可以通过设置迭代次数对选择超参数的计算量进行控制；
+
+#### 集成方法
+
+另一种对你的系统进行调优的方式是对所有性能好的模型进行集成。集成后的系统通常会比它们各自运行的性能要好（就像随机森林的性能要比单独的决策树好），特别是独立的模型产生的错误类型不同的情况下。我们将在[第七章](#20180201213244)中讲解更多过于集成的内容。
+
+#### 分析最好模型机器错误
 
 <h2 id="20180201164000">第六章 决策树</h2>
 
