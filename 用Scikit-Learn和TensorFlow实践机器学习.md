@@ -1778,6 +1778,77 @@ for mean_score, params in zip(cvres['mean_test_score'], cvres['params']):
 
 #### 分析最好模型机器错误
 
+通过对最好模型的检查，你通常可以对问题获得一些深刻的领悟。例如随机森林可以体现出对做出准确预测，每个特征间相关性的重要程度，
+
+```python
+feature_importance = grid_search.best_estimator_.feature_importances_
+feature_importance
+```
+输出为：
+```
+array([  6.94099959e-02,   6.10940144e-02,   4.14825682e-02,
+         1.42991597e-02,   1.47589776e-02,   1.51795873e-02,
+         1.44998492e-02,   3.44181585e-01,   6.49554167e-02,
+         1.13468658e-01,   5.61404296e-02,   3.86634005e-03,
+         1.81321169e-01,   6.32894793e-05,   2.33173708e-03,
+         2.94722286e-03])
+```
+让我们在每个重要程度的旁边加上对应的属性名：
+```python
+extra_attribs = ['rooms_per_hhold', "pop_perhhold", "bedrooms_per_room"]
+cat_one_hot_attr = list(encoder.classes_)
+attributes = num_attribs + extra_attribs + cat_one_hot_attr
+sorted(zip(feature_importance, attributes), reverse=True)
+```
+输出为：
+```
+[(0.34418158544556021, 'median_income'),
+ (0.1813211687597093, 'INLAND'),
+ (0.11346865757983388, 'pop_perhhold'),
+ (0.069409995925849621, 'longitude'),
+ (0.064955416740030511, 'rooms_per_hhold'),
+ (0.061094014402799365, 'latitude'),
+ (0.056140429569382068, 'bedrooms_per_room'),
+ (0.041482568205151941, 'housing_median_age'),
+ (0.015179587317949186, 'population'),
+ (0.014758977600565416, 'total_bedrooms'),
+ (0.014499849228911193, 'households'),
+ (0.014299159748972343, 'total_rooms'),
+ (0.0038663400523453613, '<1H OCEAN'),
+ (0.0029472228648162431, 'NEAR OCEAN'),
+ (0.0023317370788677027, 'NEAR BAY'),
+ (6.3289479255763706e-05, 'ISLAND')]
+```
+
+通过这些信息，你可以将一些你认为不重要的特征删除（例如：很显然，只有一个 `category_proximity` 类是真正有用的，所以你可以将其他的类去掉）。
+
+你也应当查看你的系统所存在的某些特殊错误，尝试去寻找造成这种错误的原因，并找到解决这些问题的方法（添加额外的属性，或者相反地，输出某些不含信息量的属性，清除离群点等）。
+
+#### 在你的测试集上评价你的系统
+
+对你的模型结果了一段时间的调整之后，你终于得到了一个性能够好的系统。现在可以在测试集上评价最终的模型。这个过程中并没有特殊的东西；只需要在你的测试集上预测标记，运行你的 `full_pipeline` 实例（调用 `transform()` 而不是 `fit_transform()!`），在测试集上评估最终的模型：
+```python
+final_model = grid_search.best_estimator_
+X_test = strat_test_set.drop("median_house_value", axis=1)
+y_test = strat_test_set['median_house_value'].copy()
+
+X_test_prepared = full_pipeline.transform(X_test)
+final_predictions = final_model.predict(X_test_prepared)
+
+final_mse = mean_squared_error(y_test, final_predictions)
+final_rmse = np.sqrt(final_mse)
+final_rmse
+```
+输出为：`47982.630897763389`
+
+如果你超参数的调节上做了大量的工作，那么在测试集上的性能通常会比你通过交叉验证的方式得到的性能要差一点（因为你的系统在验证数据上进行超参数的调优，对于未知的数据集不太可能表现出相似的性能）。在这个例子中，不存在这个问题，但如果发生的话，你需要采取一些措施防止调优后的超参数作用在测试集上的效果看起来很好，这种“改进”通常不会对新数据的泛化产生帮助。
+
+现在到来项目上线前的阶段了：你需要介绍你的解决方案（主要介绍你的系统学习了哪些东西，什么是起作用的，什么是不起作用的，你做了哪些假设，你的系统存在哪些局限），记录所有的过程，以数据可视化以及利于记忆的话（比如：中位收入是对预测房子价格最有用的属性），创建一个漂亮的成果演示。
+
+### 加载、监视并维护你的系统
+
+很好，你的系统被准许上线了！
+
 <h2 id="20180201164000">第六章 决策树</h2>
 
 <h2 id="20180201213244">第七章 集成学习与随机深林</h2>
