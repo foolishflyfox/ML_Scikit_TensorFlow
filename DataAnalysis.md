@@ -19,6 +19,8 @@ export_on_save:
 - 绘制所有数值型数据的柱状图 :`df.hist(bins=10, figsize=(20,15))`，`bins`为柱的数目，`figsize`是一个tuple，表示每个图的大小；
 - 绘制单个数据的柱状图 :`df['attrib'].hist(bins, figsize)`
 - 分析分类数据的特性 :`df['cat_attrib'].value_counts()`
+- 所有的相关系数 :`df.corr()`
+- 与某一项的相关系数 : `housing.corr()[ 'median_house_value' ].sort_values( ascending=False )`
 
 ## 数据划分
 
@@ -71,14 +73,6 @@ housing.plot(x="longitude", y="latitude", kind="scatter",
 from pandas.plotting import scatter_matrix
 scatter_matrix(housing[['median_house_value', 'median_income',
  'housing_median_age']],figsize=(10,8))
-```
-
-## 寻找相关性
-```python
-# 所有的相关系数
-housing.corr()
-# 与某一项的相关系数
-housing.corr()['median_house_value'].sort_values(ascending=False)
 ```
 
 ## 属性之间的联合

@@ -235,6 +235,8 @@ code.language-yaml {
 <li>绘制所有数值型数据的柱状图 :<code>df.hist(bins=10, figsize=(20,15))</code>，<code>bins</code>为柱的数目，<code>figsize</code>是一个tuple，表示每个图的大小；</li>
 <li>绘制单个数据的柱状图 :<code>df['attrib'].hist(bins, figsize)</code></li>
 <li>分析分类数据的特性 :<code>df['cat_attrib'].value_counts()</code></li>
+<li>所有的相关系数 :<code>df.corr()</code></li>
+<li>与某一项的相关系数 : <code>housing.corr()[ 'median_house_value' ].sort_values( ascending=False )</code></li>
 </ul>
 <h2 class="mume-header" id="%E6%95%B0%E6%8D%AE%E5%88%92%E5%88%86">数据划分</h2>
 
@@ -293,13 +295,6 @@ housing<span class="token punctuation">.</span>plot<span class="token punctuatio
 <pre class="language-python"><span class="token keyword">from</span> pandas<span class="token punctuation">.</span>plotting <span class="token keyword">import</span> scatter_matrix
 scatter_matrix<span class="token punctuation">(</span>housing<span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token string">'median_house_value'</span><span class="token punctuation">,</span> <span class="token string">'median_income'</span><span class="token punctuation">,</span>
  <span class="token string">'housing_median_age'</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">8</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-</pre>
-<h2 class="mume-header" id="%E5%AF%BB%E6%89%BE%E7%9B%B8%E5%85%B3%E6%80%A7">寻找相关性</h2>
-
-<pre class="language-python"><span class="token comment" spellcheck="true"># 所有的相关系数</span>
-housing<span class="token punctuation">.</span>corr<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token comment" spellcheck="true"># 与某一项的相关系数</span>
-housing<span class="token punctuation">.</span>corr<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token string">'median_house_value'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>sort_values<span class="token punctuation">(</span>ascending<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
 </pre>
 <h2 class="mume-header" id="%E5%B1%9E%E6%80%A7%E4%B9%8B%E9%97%B4%E7%9A%84%E8%81%94%E5%90%88">属性之间的联合</h2>
 
@@ -430,7 +425,6 @@ model_loaded <span class="token operator">=</span> joblib<span class="token punc
 <li><a href="#%E6%95%B0%E6%8D%AE%E6%8E%A2%E7%B4%A2">数据探索</a></li>
 <li><a href="#%E6%95%B0%E6%8D%AE%E5%88%92%E5%88%86">数据划分</a></li>
 <li><a href="#%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96">数据可视化</a></li>
-<li><a href="#%E5%AF%BB%E6%89%BE%E7%9B%B8%E5%85%B3%E6%80%A7">寻找相关性</a></li>
 <li><a href="#%E5%B1%9E%E6%80%A7%E4%B9%8B%E9%97%B4%E7%9A%84%E8%81%94%E5%90%88">属性之间的联合</a></li>
 <li><a href="#%E6%95%B0%E6%8D%AE%E6%B8%85%E7%90%86">数据清理</a></li>
 <li><a href="#%E7%89%B9%E5%BE%81%E7%BC%A9%E6%94%BE">特征缩放</a></li>
