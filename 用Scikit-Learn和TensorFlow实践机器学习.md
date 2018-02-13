@@ -200,7 +200,7 @@ export_on_save:
 
 # 第一部分 机器学习基础
 
-## 第一章 机器学习纵览
+## <h2 id="20180213142735">第一章 机器学习概览</h2>
 
 大多数人听到 “机器学习” 时，大脑中应该会浮现出一个机器人：可信赖的管家或者是致命的终结者，随你怎么称呼吧。但是机器学习并非仅仅是未来的一个奇迹。事实上，它已经在某些特殊的应用场景中存在了几十年，例如光学字符识别（Optical Character Recognition, OCR）。但是机器学习的应用第一次成为主流，改善千万人的生活需要追溯到上世纪的90年代：垃圾邮件过滤器。它并不是一个有自我意识的天网，但是在技术层面的确是一个合格的机器学习应用（它实际上已经几乎不需要你辅助标出垃圾邮件了）。它被许多的机器学习应用所效仿，并默默影响着从更好的推荐系统到语义检索等成百上千的你所经常使用的功能。
 
@@ -694,7 +694,7 @@ print(clf.predict(X_new)) # 输出为 [[ 5.96242338]]
 
 答案见[附录A](#Chapter1Answer)。
 
-## 第二章 从头到尾实践机器学习项目
+## <h2 id="20180213143142">第二章 从头到尾实践机器学习项目</h2>
 
 在这一章中，假设你被一个房地产公司录用当一名数据科学家，你将完成一个完整的机器学习项目。下面是你将要做的主要内容：
 
@@ -904,7 +904,7 @@ $ jupyter notebook
 ![figure 2-4](./asset/figure2_4.png)
 *图 2-4 Python notebook版 hello，world*
 
-<h4 id="20180127150435">下载数据</h4>
+#### <h4 id="20180127150435">下载数据</h4>
 
 通常来说，你的数据被存放在关系型数据库中（或者是其他常见的数据存储中），包含多张表/文档/文件。为了取得这些数据，你首先需要获得你的凭证和访问授权（有时候还需要检查法律约束，比如隐私领域可能会要求：不能将数据复制到不安全的存储介质中），并且熟悉数据的结构。在我们这个项目中比较简单：你只需要简单地下载一个压缩文件，提取出其中的CSV文件，但最好还是创建一个小函数来实现该功能。这通常来说非常有益，特别是数据如果是定期变化的情况，你可以编写一个小脚本，当最新的数据到来时就执行它（也可以设置一个周期性的任务，在一定的时间间隔自动运行该脚本）。如果你需要在多台机器上安装数据集，那么实现获取数据过程的自动化也非常有用。
 
@@ -1142,7 +1142,7 @@ housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.1)
 housing.plot(kind="scatter", x="longitude", y="latitude",
             alpha=0.4, s=housing['population']/100,
             label="population", c="median_house_value",
-            cmap=plt.get_cmap("jet"), colorbar=True)
+            cmap="jet"c, colorbar=True)
 ```
 ![figure2-13](./asset/figure2_13.png)
 
@@ -1618,7 +1618,7 @@ tree_rmse
 
 一种验证的方式是：通过函数`train_test_split`函数将训练集分成更小的训练集和一个确认集，接着使用这个更小的训练集进行训练，并使用确认集进行评估。这里有一点工作量，但在原理上没有什么困难，也能工作得相当不错。
 
-另一种相当好的替代方案是使用 Scikit-Learn 的 *交叉验证* 功能。下面的代码使用的是 k-折交叉验证：它随机将训练集分成10个不同的子集，称为 *折(fold)*，之后，将决策树模型训练10次，每次讲其中1个子集选为确认集，另外9个子集作为训练集。结果是得到包含有10个评价结果的一个数组：
+另一种相当好的替代方案是使用 Scikit-Learn 的 *交叉验证* 功能。下面的代T码使用的是 k-折交叉验证：它随机将训练集分成10个不同的子集，称为 *折(fold)*，之后，将决策树模型训练10次，每次讲其中1个子集选为确认集，另外9个子集作为训练集。结果是得到包含有10个评价结果的一个数组：
 ```python
 from sklearn.model_selection import cross_val_score
 scores = cross_val_score(tree_reg, housing_prepared, housing_labels,
@@ -1663,7 +1663,7 @@ Standard deviation: 2731.6740018
 from sklearn.ensemble import RandomForestRegressor
 forest_reg = RandomForestRegressor()
 forest_reg.fit(housing_prepared, housing_labels)
-forest_rmse = mean_squared_error(forest_reg.predict(housing_prepared),
+forest_rmse = mean_squared_error(forest_reg.predict(housin_prepared),
                                 housing_labels)**0.5
 forest_scores = cross_val_score(forest_reg, housing_prepared, housing_labels,
                                scoring="neg_mean_squared_error", cv=10)
@@ -1716,7 +1716,7 @@ grid_search = GridSearchCV(forest_reg, param_grid, cv=5,
 grid_search.fit(housing_prepared, housing_labels)
 ```
 ![suggest](./asset/suggest.png) 当你不知道超参数应该如何设置时，一种简单的方法是尝试使用10的连续次幂(如果你希望进行更细粒度的搜索，可以选择更小的值，正如上面例子中所给出的 `n_estimators` 超参数)。
-
+3 f
 变量`param_grid`告诉 Scikit-Learn 第一次评估是的超参数组合供 3 × 4 = 12 组，由字典中第一个值决定(`n_estimators`中有3个数，`max_features`中有4个数)，现在不要担心不理解这些超参数的含义，它们将在[第七章](#20180201213244)中进行详细的讲解；之后尝试字典中第二个元素所指定的 2 × 3 = 6 组超参数，但这一次 `bootstrap` 超参数被设置为False（第一次使用默认的True）。
 
 总而言之，这个网格搜索将会探索 12 + 6 = 18 组的随机森林超参数组合，而且每个模型都会进行5次训练（因为我们指定了 `cv=5`，使用 5-折交叉验证）。换句话说，这个过程一共需要进行 18 × 5 = 90 次的训练！这可能需要较长的时间，但在完成之后，你可以得到如下的最佳超参数组合：
@@ -1761,7 +1761,7 @@ for mean_score, params in zip(cvres['mean_test_score'], cvres['params']):
 57646.3484559 {'max_features': 8, 'n_estimators': 3}
 51508.9126716 {'max_features': 8, 'n_estimators': 10}
 49787.3879945 {'max_features': 8, 'n_estimators': 30}
-61571.9872669 {'bootstrap': False, 'max_features': 2, 'n_estimators': 3}
+61571.9872669 {'bootstrap': False, 'max_features': 2, 'fn_estimators': 3}
 54086.1895419 {'bootstrap': False, 'max_features': 2, 'n_estimators': 10}
 60746.9603265 {'bootstrap': False, 'max_features': 3, 'n_estimators': 3}
 52646.1026445 {'bootstrap': False, 'max_features': 3, 'n_estimators': 10}
@@ -1819,7 +1819,7 @@ sorted(zip(feature_importance, attributes), reverse=True)
  (0.041482568205151941, 'housing_median_age'),
  (0.015179587317949186, 'population'),
  (0.014758977600565416, 'total_bedrooms'),
- (0.014499849228911193, 'households'),
+ (0.014499849228911193, 'households'),xf
  (0.014299159748972343, 'total_rooms'),
  (0.0038663400523453613, '<1H OCEAN'),
  (0.0029472228648162431, 'NEAR OCEAN'),
@@ -1881,13 +1881,138 @@ final_rmse
 
 这些练习的解答可以从在线的Jupyter notebooks https://github.com/ageron/handson-ml 上看到。
 
-<h2 id="20180201164000">第六章 决策树</h2>
+## 第三章 分类
 
-<h2 id="20180201213244">第七章 集成学习与随机深林</h2>
+在[第一章](#20180213142735)中，我们提到最常见的监督学习机器学习任务是回归（对数值进行预测）和分类（对类别进行预测）。在[第二章](#20180213143142)中，我们对一个回归任务进行了实践。通过各种机器学习算法，如线性回归、决策树、随机森林（这些内容将在之后的章节详细介绍），对房屋价格进行预测。现在，我们将注意力转移到分类任务上。
+
+### MNIST
+
+在本章中，我们将使用一个 **MNIST** 数据集进行训练和测试。该数据集中包含了7万多张由美国高中生及统计局职员手写数字的小图片，每张图片都标识了其所代表的数字。这个数据集通常用于机器学习的入门案例，相当于编程中的 “hello,world” 程序：当提出一种新的分类学习算法后，通常先将该算法应用于该数据集上进行测试。任何人在学习机器学习算法时，迟早都要和 MINIST 数据集打交道。
+
+Scikit-Learn 包提供了很多用于下载流行数据集的函数。其中 MNIST 就是其中一个。通过下面的代码可以获得 MNIST 数据集（默认情况下，Scikit-Learn 会将数据库缓冲文件存放在目录 `$HOME/scikit_learn_data` 下）：
+``` python
+from sklearn.datasets import fetch_mldata
+mnist = fetch_mldata("MNIST original")
+mnist
+```
+输出为：
+```
+{'COL_NAMES': ['label', 'data'],
+ 'DESCR': 'mldata.org dataset: mnist-original',
+ 'data': array([[0, 0, 0, ..., 0, 0, 0],
+        [0, 0, 0, ..., 0, 0, 0],
+        [0, 0, 0, ..., 0, 0, 0],
+        ...,
+        [0, 0, 0, ..., 0, 0, 0],
+        [0, 0, 0, ..., 0, 0, 0],
+        [0, 0, 0, ..., 0, 0, 0]], dtype=uint8),
+'target': array([ 0.,  0.,  0., ...,  9.,  9.,  9.])}
+```
+---
+**译者注**：在翻译过程中发现，如果用上面的代码进行数据的下载，速度回非常慢。而且每次运行这段代码都需要很长的时间进行数据下载。故译者采用如下方案：
+1. 从 [MNIST mldata.org](http://mldata.org/repository/data/viewslug/mnist-original/) 直接下载 [mnist-original.mat文件](http://mldata.org/repository/data/download/matlab/mnist-original/)(点击自动下载) 即可。下载完成后得到文件：mnist-original.mat，将该文件放入 datasets 文件夹中；
+1. 从 mat 文件载入数据：
+```python
+import scipy.io
+mnist = scipy.io.loadmat("datasets/mnist-original.mat")
+mnist
+```
+输出为：
+```
+{'__globals__': [],
+ '__header__': b'MATLAB 5.0 MAT-file Platform: posix, Created on: Tue Feb 13 12:51:29 2018',
+ '__version__': '1.0',
+ 'data': array([[0, 0, 0, ..., 0, 0, 0],
+        [0, 0, 0, ..., 0, 0, 0],
+        [0, 0, 0, ..., 0, 0, 0],
+        ...,
+        [0, 0, 0, ..., 0, 0, 0],
+        [0, 0, 0, ..., 0, 0, 0],
+        [0, 0, 0, ..., 0, 0, 0]], dtype=uint8),
+ 'label': array([[ 0.,  0.,  0., ...,  9.,  9.,  9.]]),
+ 'mldata_descr_ordering': array([[array(['label'],
+       dtype='<U5'),
+         array(['data'],
+       dtype='<U4')]], dtype=object)}
+```
+与通过 `fetch_mldata` 函数相比，该mnist变量有些不同，进行修改以使得后面的代码直接能用；
+
+3. 改造mnist
+```python
+mnist = {
+    'COL_NAMES': ['label', 'data'],
+    'DESCR': 'mldata.org dataset: mnist-original',
+    'data': mnist['data'].T,
+    'target': mnist['label'].reshape(-1)
+}
+```
+将获得与书中相同的一个对象；
+
+---
+
+通常，通过Scikit-Learn加载的数据集拥有相同的字典结构，包含如下的键：
+- `DESCR` : 对数据集的描述；
+- `data` : 一个二维数组(numpy.array)，其中每一行是一个实例，每一列是一个特征；
+- `target` : 一个标记数组
+
+我们看一看这些数组：
+```python
+X, y = mnist['data'],mnist['target']
+print(X.shape) # 输出为 (70000, 784)
+print(y.shape) # 输出为 (70000,)
+```
+
+这里一共有70000张图片，每个照片有784个特征。因为每个图片都有28×28个像素点，而每个特征值的范围都是 0~255，表示像素点的灰度值，0表示黑，255表示白。让我们从数据集中取出一个进行查看。你只需要获得一个实例所对应的特征向量，将其变为一个 28×28 的二维数组，通过 `Matplotlib` 的 `imshow()` 函数进行显示：
+```python
+import matplotlib
+import matplotlib.pyplot as plt
+
+some_digit = X[36000]
+some_digit_img = some_digit.reshape(28,28)
+
+plt.imshow(some_digit_img, cmap="binary")
+plt.axis("off")
+plt.show()
+```
+显示为：
+![手写数字5](./asset/20180213215132.png)
+
+这个数字看起来很像5，我们来验证一下：
+```
+>>> y[36000]
+5.0
+```
+的确是数字5。
+
+图 3-1 展示了更多的手写数字，从中你应该能够感觉到这个分类任务还是很棘手的。
+
+![所有数字](./asset/20180213215536.png)
+*图 3-1 MNIST中的一些手写数字*
+
+暂停一下。在你开始数据分析之前，应该记得先从数据集中抽取出测试集。实际上，MNIST数据集已经完成了划分（其中前60000张图片是训练集，后10000张图片是测试集）：
+```python
+X_train, X_test, y_train, y_test = X[:60000], X[60000:], y[:60000], y[60000:]
+```
+我们先将训练集打乱，这保证了在交叉验证的过程中，每一折是相似的（你应该不希望看到某一折中缺失一些数字吧）。另外，有的机器学习算法对训练数据集中的数据顺序比较敏感，在连续得到相似的实例后，会导致这些算法训练出来的模型性能下降。打乱数据能够避免上述提到的问题：
+
+```python
+import numpy as np
+shuffle_index = np.random.permutation(60000)
+X_train, y_train = X_train[shuffle_index], y_train[shuffle_index]
+```
+
+> 注：在某些情况下，打乱数据并不是一个好主意。例如，你的数据的顺序与时间相关（如股票价格或天气状况），这种情况我们将在下一章中说明。
+
+### 训练一个二分类器
+
+
+## <h2 id="20180201164000">第六章 决策树</h2>
+
+## <h2 id="20180201213244">第七章 集成学习与随机深林</h2>
 
 # 附录A 练习的答案
 
-<h2 id="Chapter1Answer">第一章 机器学习纵览</h2>
+## <h2 id="Chapter1Answer">第一章 机器学习纵览</h2>
 
 1. 机器学习是建立一个能够从数据中进行学习的系统。学习的意思是让机器能够获得更好的性能。
 1. 目前来说没有算法可以解决的复杂问题；需要手动编写并维护大量规则的问题；需要能够根据环境变化及时作出调整的问题；辅助人类进行学习；
@@ -1909,9 +2034,9 @@ final_rmse
 1. 如果你用测试集来调整超参数，你可能会过拟合测试集，这会使泛化误差非常大（也许你最终加载的模型性能比你的预计要差）
 1. 交叉验证是一种挑选模型的技术（用于选择超参数和模型），但不需要从训练集中特意划分出一部分数据作为确认集，这也节约了训练数据。
 
-# 附录 B
+# 附录B
 
-<h2 id="201801261106">机器学习项目清单</h2>
+## <h2 id="201801261106">机器学习项目清单</h2>
 
 该清单能够指导你开展你的机器学习项目，一共有8个主要的步骤：
 
@@ -1941,7 +2066,7 @@ final_rmse
 1. 列出你（或其他人）所做的假设。
 1. 如果可能的话，对假定进行核实。
 
-<h3 id="201801261112">获取数据</h3>
+### <h3 id="201801261112">获取数据</h3>
 
 **注意：** 尽可能地实现采集数据的自动化，以便于更容易地获得最新数据。
 
