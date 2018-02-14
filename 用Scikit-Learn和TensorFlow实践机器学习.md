@@ -2005,6 +2005,170 @@ X_train, y_train = X_train[shuffle_index], y_train[shuffle_index]
 
 ### 训练一个二分类器
 
+现在，我们先将问题进行简化——让分类器能够识别出一个数字，例如5。这个 “5识别器” 就是一个二分类器的例子，能够区分两个类别：数字5 和 非数字5。实现，让我们为这一分类任务创建目标向量：
+
+```python
+y_train_5 = (y_train == 5) #所有标记为5的位置,布尔值为True;不为5的位置,布尔值为False
+y_test_5 = (y_test == 5)
+```
+现在我们选择一个分类器模型进行训练。可以将 Stochastic Grandient Descent(随机梯度下降)分类器模型 用于该任务，涉及到 Scikit-Learn 中的  SGDClassifier 类。这个分类器模型有能力高效率处理大规模的数据，其中一个原因是 SGD 独立地对实例进行处理，每次只使用一个实例进行训练（这也使得 SGD 非常易于应用到在线学习中），这部分我们将在后面看到。让我们创建一个 SGDClassifier 实例，并对其进行训练：
+```python
+from sklearn.linear_model import SGDClassifier
+sgd_classifier = SGDClassifier(random_state=42, max_iter=1000)
+sgd_classifier.fit(X_train, y_train_5)
+```
+
+![suggest](./asset/suggest.png) SGDClassifier 类在训练的时候具有一定的随机性(因为在名字中就包含了 stochastic -- 随机)。如果你想对训练进行重现，就需要对参数 `random_state` 进行设置。
+
+现在，你可以使用这个训练好的模型测试图片是否为5：
+```python
+>>> sgd_classifier.predict([some_digit])
+array([ True], dtype=bool)
+```
+
+模型预测 `some_digit` 实例所对应的数字为5（结果为True）。在这个特殊的实例中，模型预测是正确的。接下来，我们对模型的性能进行评估。
+
+### 性能评估
+
+对分类模型的性能评估要比对回归模型的性能评估要复杂，所以，在本章中，我们将花大量时间讲解性能评估这一主题。当前分类模型的性能评估方式有很多，你可以来杯咖啡，准备好迎接更多的新概念及其英文缩写！
+
+#### 通过交叉验证计算准确度
+
+正如第二章中所提到的，评价一个模型性能的有效方法是交叉验证。
+
+---
+**如何实现交叉验证**
+
+有的时候你需要对交叉验证的过程进行控制，而不是仅仅是对类似 `cross_val_score` 的函数进行调用，这时候，你就需要自己实现交叉验证的代码。下面的代码所实现的功能和 `cross_val_score()` 类似，并将结果打印出来：
+```python
+from sklearn.model_selection import StratifiedKFold
+from sklearn.base import clone
+skfolds = StratifiedKFold(n_splits=3, random_state=42)
+
+for train_index, test_index in skfolds.split(X_train, y_train_5):
+    clone_clf = clone(sgd_classifier)
+    X_train_folds = X_train[train_index]
+    y_train_folds = y_train_5[train_index]
+    X_test_fold = X_train[test_index]
+    y_test_fold = y_train_5[test_index]
+
+    clone_clf.fit(X_train_folds, y_train_folds)
+    y_pred = clone_clf.predict(X_test_fold)
+    n_correct = sum(y_pred==y_test_fold)
+    print(n_correct / len(y_pred))
+
+# 3次结果分别为：0.962669777519、0.9625、0.96525
+```
+`StratifiedKFold` 类用于分层采样(第二章做过详细说明)，使得每一折中各个类型的比例相同。在每次迭代过程中，都将分类器进行复制，对复制的分类器进行训练与预测，之后计算预测正确的个数并计算预测的准确率。
+
+---
+
+让我们使用 `cross_val_score()` 函数对你的 SGDClassifier 模型进行3折交叉验证。记住，K折交叉验证是指将训练集分割成K折（在该例子中为3），之后，从这K折中取出一折用于预测与性能评估，其余的 K-1 折用于训练。
+```python
+from sklearn.model_selection import cross_val_score
+cross_val_score(sgd_classifier, X_train, y_train_5,
+               cv=3, scoring="accuracy")
+# 输出为：array([ 0.96225,  0.9509 ,  0.95085])
+```
+
+哇，例子中每一折的预测准确率（预测准确的比例）都大于 95% 。结果看起来激动人心，真的是这样吗？在你太过兴奋之前，先来看一个非常简陋的分类器：将每一幅图片都分类为 “非数字5”：
+```python
+import numpy as np
+from sklearn.base import BaseEstimator
+
+class Never5Classifier(BaseEstimator):
+    def fit(self, X, y=None):
+        pass
+    def predict(self, X):
+        return np.array([False]*len(X))
+```
+你猜猜这个分类器的准确率。让我们通过代码来验证：
+```python
+cross_val_score(Never5Classifier(), X_train, y_train_5,
+               cv=3, scoring="accuracy")
+# 输出为：array([ 0.909  ,  0.9077 ,  0.91225])
+```
+你的猜测正确吗？这个分类器居然也达到了超过 90% 的准确率！这很容易解释，因为只有10%图片代表5，那么任何图片都预测为非5，自然准确率就可以有90% ，这也并没有什么神奇的。
+
+这个例子也说明了为什么准确率并不是用于分类问题性能测试的首选指标，特别是你处理的是倾斜性的数据集的情况（例如：某个类型的数据出现的频率远高于其他类型数据出现的频率时）。
+
+#### 混淆矩阵(Confusion Matrix)
+
+一种评估分类器性能的更好方式是计算混淆矩阵，通常是计算将类别A误分类为类别B的数量。如下图所示：![Demo of Confusion Matrix](./asset/20180214201252.png)
+
+其中每一行之和表示每个类别真实的数量，每一列之和表示每个类别预测的数量。而A行B列对应的数值表示将实际类型为A的实例预测为类型B的数量。
+
+为了计算混淆矩阵，你首先预测一组数据，这样他们才能和真实值进行对比。你可以在测试集上做预测，不过我们还是先不要动测试集（记住，在项目的最后阶段，你已经得到了一个可以加载应用的分类器以后再使用测试集）。现在，你可以使用 `cross_val_predict()` 函数：
+```python
+from sklearn.model_selection import cross_val_predict
+
+y_train_pred = cross_val_predict(sgd_classifier, X_train, y_train_5, cv=3)
+```
+类似 `cross_val_score()` 函数，`cross_val_predict()` 也是以K-折交叉验证的方式运行。但与 `cross_val_score()` 不同，`cross_val_predict()` 并不是返回评价的分数，而是返回每一折的预测结果。这意味着你可以获得训练集中每一个实例对应的一个“干净”的预测结果（“干净”是指预测的实例在训练的过程中没有使用过）。
+
+现在你可以使用 `confusion_matrix()` 函数计算混淆矩阵了。只需要将真实的结果和预测的结果作为两个参数传入该函数即可：
+```python
+from sklearn.metrics import confusion_matrix
+confusion_matrix(y_train_5, y_train_pred)
+```
+结果为：
+```python
+array([[52979,  1600],
+       [ 1120,  4301]])
+```
+正如前面所述，混淆矩阵中的每一行表示真实的类别，每一列表示预测的类别。其中第一行表示所有非数字5（结果为False，称为负例）的图片中，有 52979 张图片预测为非5，预测结果正确（称为真负例，TN）；有 1600 张图片预测为5，预测结果错误（称为假正例，FP）。第二行表示所有数字5（结果为True，称为正例）的图片中，有 1120 张图片预测为非5，预测结果错误（称为假负例，FN）；有4301 张图片预测为5，预测结果正确（称为真正例，TP）。一个完美的预测期应该只有真正例和真负例，其对应的混淆矩阵应该是一个对角阵（只有对角线上才有非零元素，其他位置的元素值都为0）：
+```
+confusion_matrix(y_train_5, y_train_perfect_predictions)
+# 输出为：
+array([[54579, 0],
+      [ 0, 5421]])
+```
+混淆矩阵的确为我们提供了很多的信息，但有时候，你想要一个更加简明的测量结果。一个有用的指标是对所有被预测为正例的实例中有多少是正确的，这称为分类器的查准率(Precision)，如 等式 3-1 所示：
+*等式 3-1. 查准率*
+$$precision = \frac{TP}{TP+FP}$$
+
+其中 *TP* 为真正例的数量，*FP* 为假正例的数量。
+
+其实要使查准率达到100%也并不困难，只需要将一个你确定为正例的实例预测为正例，那么根据公式查准率就是100%，所以单一的查准率并没有什么意义。所以查准率通常和另一个测量指标——查全率(recall) 结合使用，有时候也成为敏感度(sensitivity)或真正例比率(true positive rate, TPR)，它表示在所有的正例中，被预测器正确预测的比例，如等式 3-2 所示：
+*等式 3-2. 查全率*
+$$recall=\frac{TP}{TP+FN}$$
+其中的 FN 表示假负例的个数。
+
+如果你对混淆矩阵仍有疑惑，图3-2 应该对你有所帮助。
+
+![figure 3-2](./asset/figure3_2.png)
+*图 3-2. 混淆矩阵的示意图*
+
+#### 查全率和查准率
+
+Scikit-Learn 提供了很多用于计算分类器性能指标的函数，包括计算查全率和查准率的函数：
+```
+>>> from sklearn.metrics import precision_score, recall_score
+>>> precision_score(y_train_5, y_train_pred) # 应该等于 4301/(4301+1600)
+0.72885951533638371
+>>> recall_score(y_train_5, y_train_pred) # 应该等于 4301/(4301+1120)
+0.79339605238885813
+```
+现在，你的 数字5监测器 的性能没有之前使用准确率表示时候看起来好了。因为在所有预测为5的实例中，只有72.9%是正确的；而且真正为5的实例中，只有79.3%被检测出来。
+
+通常，如果你希望比较两个分类器的好坏，可以将查准率与查全率结合成一个称为$F_1$值的指标后进行比较。$F_1$值实际上是查准率与查全率的调和平均数（如等式3-3所示）。常规的平均数对每个值的权重都相同，而对于调和平均数而言，越小的值得权重越大。因此，只有在查准率和查全率都较高时，对应的$F_1$值才可能较高。
+
+*等式 3-3. $F_1$值*
+$$F_1=\frac{2}{\frac{1}{precision}+\frac{1}{recall}}=2\times\frac{precision\times recall}{precision+recall}=\frac{TP}{TP+\frac{FN+FP}{2}}$$
+
+想要求$F_1$值，只需要简单调用`f1_score()`函数：
+```python
+>>> from sklearn.metrics import f1_score
+>>> f1_score(y_train_5, y_train_pred)
+0.78468208092485547
+```
+
+$F_1$指标有利于查准率和查全率的数值较为接近的分类器。但可能并不符合你的要求：在一些情况下，你非常看重查准率，而有些情况下，你更看重查全率。例如，你希望一个分类器能够区分视频对小孩子的身心健康是否有害，你宁愿将很多有益视频归类为有害视频（低查全率），以保证筛选出的视频都是对孩子有益的（高查准率），也不希望分类器拥有高查全率，但是在筛选出的视频中存在有害视频（在这种情况下，你可能还需要将人工筛查模块添加到你的流水线中）。另一方面，如果你希望一个分类器能够通过监控视频分辨出商店的窃贼：对于你来说，分类器有30%的查准率和99%的查全率，就是一个好的分类器（虽然安保系统会发出一些假的警报，但几乎确保了每个盗贼都会被捉到）。
+
+好可惜，查准率和查全率不可兼得：查准率越高，查全率就越低，反之亦然。这称为 查准率/查全率权衡。
+
+#### 查准率/查全率权衡
+
 
 ## <h2 id="20180201164000">第六章 决策树</h2>
 

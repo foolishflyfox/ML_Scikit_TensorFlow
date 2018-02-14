@@ -134,6 +134,12 @@ df = DataFrame(a, columns=df.columns)
 
 MSE 误差测量使用 `sklearn.metrics.mean_squared_error`，使用方法是：`mean_squared_error(labels, predictions)`
 
+precision 查准率测量使用：`sklearn.metrics.precision_score`，使用方法是：`precision_score(labels, predictions)`
+
+recall 查全率测量使用：`sklearn.metrics.recall_score`，使用方法是：`recall_score(labels, predictons)`
+
+$F_1$值测量使用：`sklearn.metrics.f1_score`，使用方法是：`f1_score(labels, predictons)`
+
 ### 树模型
 
 树模型在 `sklearn.tree` 模块中。
@@ -157,11 +163,32 @@ MSE 误差测量使用 `sklearn.metrics.mean_squared_error`，使用方法是：
 
 ## 评价一个模型的好坏
 
+### 对数据集进行K折分层采样
+
+`sklearn.model_selection.StratifiedKFold`用于将数据进行分层划分，使用方法如下：
+
+```python
+skfold = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+for train_index, test_index in skfold.split(X, y):
+    X_train_folds = X[train_index]
+    y_train_folds = y[train_index]
+    X_test_fold = X[test_index]
+    y_test_fold = y[test_index]
+    model.fit(X_train_folds, y_train_folds)
+    y_test_pred = model.predict(X_test_fold)
+    meansure_performance(y_test_pred, y_test_fold)
+```
+
+
+
 ### 使用交叉验证的方式
 
-主要用到的类是：`sklearn.model_selection.cross_val_score`
+主要用到的函数是：`sklearn.model_selection.cross_val_score`
 
 使用方法也很简单：`scores = cross_val_score(model_instance, X, y, scoring='mean_squared_error', cv=10)`，如此调用返回的是10-折交叉验证得到的负的MSE数组。
+
+
+`sklearn.model_selection.cross_val_predict` 函数用于返回交叉验证的结果集。
 
 ### 网格搜索最佳的超参数组合
 
