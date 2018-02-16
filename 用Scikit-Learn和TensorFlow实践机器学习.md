@@ -2169,6 +2169,168 @@ $F_1$指标有利于查准率和查全率的数值较为接近的分类器。但
 
 #### 查准率/查全率权衡
 
+为了更好地理解这一权衡，让我们看看 `SGDClassifier`如何做出分类决策。对于每一个实例，它通过一个 *决策函数* 计算该实例对应的评分。如果评分大于阈值，将该实例就被标记为正例，否则将其标记为负例。*图 3-3* 显示了分数值从低（左边）到高（右边）对应的一些图片，假定决策阈值在箭头的正中央（在两个5之间）：将有4个真正例（真实值即为5）在阈值分割点的右边，有1个假正例（实际值为6）在阈值分割点的左边。因此，该阈值分割的查准率是80%（5个中有4个）。但实际上有正例6个，但分类器只检测出4个，所以查全率为67%（6个中有4个）。如果你将分割阈值增大（将阈值分割点像箭头右侧移动），数字6对应的图片将会由假正例变为真负例，因此，分类器的查准率提高了（在该例子中，查准率达到了100%），但同时有一个真正例变为了假负例，查全率降低为50% 。而降低分割阈值会增大查全率，但减小查准率。
+
+![figure 3-3](./asset/figure3_3.png)
+*图 3-3. 检测阈值与查准率/查全率权衡*
+
+Scikit-Learn并没有提供函数用于直接对分割阈值进行修改，但你可以通过调用函数获得预测的评分。想要获得预测评分，可以调用 `decision_function()` 方法，它将为每个实例返回一个评分，之后你可以基于这些评分尝试你希望设置的分割阈值：
+```python
+y_scores = sgd_classifier.decision_function([some_digit])
+y_scores # 输出为 array([ 303.18076405])
+```
+
+将分割阈值设置为0：
+```python
+threshold = 0
+y_some_digit_pred = (y_scores > threshold)
+y_some_digit_pred
+```
+输出为：`array([ True], dtype=bool)`
+
+将分割阈值设置为0，得到的结果与之前通过 `predict()` 函数获得的结果相同。接下来我们提高分割阈值：
+```python
+threshold = 400
+y_some_digit_pred = (y_scores > threshold)
+y_some_digit_pred
+```
+输出为：`array([False], dtype=bool)`
+
+这就验证了增大分割阈值会降低查全率。实际表示5的图片，在分割阈值为0时，被分类器正确地识别为5，而在分割阈值为400时，被分类器识别为非5。
+
+所以，你该如何取分割阈值呢？首先，你还是需要通过 `cross_val_predict` 以K折交叉验证的方式获得训练集中每个实例对应的评分，这需要指定 `cross_val_score` 的 `method` 参数：
+```python
+from sklearn.model_selection import cross_val_predict
+y_scores = cross_val_predict(sgd_classifier, X_train, y_train_5,
+                             cv=3, method="decision_function")
+```
+有了这些评分之后，你可以通过 `precision_recall_curve()` 函数计算所有可能的分割阈值对应的查准率与查全率：
+```python
+from sklearn.metrics import precision_recall_curve
+# hack to work around issue #9589 introduced in Scikit-Learn 0.19.0
+if y_scores.ndim == 2:
+    y_scores = y_scores[:, 1]
+precisions, recalls, thresholds = precision_recall_curve(y_train_5, y_scores)
+```
+
+> 注：此处的代码与书本上的略有不同(与作者提供的源码系统)，因为 SCikit-Learn 0.19.0 版本的 `cross_val_predict()` 函数自身存在的[#9589问题](https://github.com/scikit-learn/scikit-learn/issues/9589)，故代码做了一些修改。
+
+你可以通过 Matplotlib 提供的函数，将查准率与查全率随分割阈值变化的曲线绘制出来（如图 3-4 所示）：
+```python
+import matplotlib.pyplot as plt
+
+def plot_precision_recall_vs_threshold(precisions, recalls, thresholds):
+    plt.plot(thresholds, precisions[:-1], "b--", label='Precision')
+    plt.plot(thresholds, recalls[:-1], "g-", label="Recall")
+    plt.xlabel('Threshold')
+    plt.legend(loc='center left')
+    plt.ylim([0, 1.05])
+
+plot_precision_recall_vs_threshold(precisions, recalls, thresholds)
+plt.show()
+```
+![figure 3-4](./asset/figure3_4.png)
+*图 3-4. 每个检测阈值对应的查准率与查全率*
+
+![note](./asset/note.png)你也许会奇怪，在上图中为什么查准率曲线要比查全率曲线更加“曲折”（也就是不稳定，从图中看出查准率并不是单调递增的）？这是因为查准率有时候在你增大阈值时，反而会减小（虽然总体上讲是阈值越大，查准率就越大）。要理解造成这种情况的原因，你需要回过头看看图3-3，你将分割阈值从中间位置向右移动一格（跳过一张图片），查准率从 4/5 (80%) 下降为 3/4 (75%)。另一方面，计算查全率时，其分母是所有正例的个数，对于一个给定的数据集，这个值是固定不变的，其分子是真正例的个数，而分割阈值增大后，分子不会增加，只会减少，所有查全率看起来要比查准率的曲线平滑。
+
+现在你可以很容易地为你的任务选择一个好的分割阈值。另一种选择好的 查准率/查准率权衡 的方式是直接以查全率和查准率为横纵坐标绘制曲线（如图 3-5 所示）：
+![figure 3-5](./asset/figure3_5.png)
+*图 3-5. 查准率-查全率曲线*
+
+从图中你可以看到在查全率增大到 80% 以后，查准率急剧下降，你应该在急剧下降之前选择你的查准率/查全率权衡，例如选择查全率为60%左右。当然，具体的选择应该根据你的项目进行。例如，你需要的查准率为90%，你查看图 3-4（需要进行放大），发现需要将分割阈值设置在800左右，为了实现指定的查准率，你不能调用 `predict()` 方法，实现代码如下：
+```python
+y_train_pred_90 = (y_scores > 800)
+```
+让我们测试一下该分割阈值下的查准率与查全率：
+```python
+>>> precision_score(y_train_5, y_train_pred_90)
+0.9015304649148137
+>>> recall_score(y_train_5, y_train_pred_90)
+0.57590850396605797
+```
+很好，你已经得到了一个查准率为90%的分类器（或者接近该查准率）! 正如你所见，如何查准率的分类器都非常容易创建：只需要将分割阈值设置的足够高，你就完成了。但如果查准率很高而查全率很低的分类器也没什么卵用。
+![suggest](./asset/suggest.png)如果老板叫你实现一个查准率为99%的分类器，你应该反问：“您打算查全率达到多少”。
+
+#### ROC 曲线
+
+ROC（receiver operating characteristic,接收者操作特征）曲线是另一种分类器常用的工具。它与查准率/查全率曲线非常相似，但并不是以查全率和查准率为横纵坐标，而是以假正例的比例和真正例的比例（也称为查全率）为横纵坐标。其中 FPR（假正例比例，false positive rate）是指在所有的负例中，被分类器误分类为正例的比例，其值等于1减去真负例比例，真负例比例就是在所有的负例中，被分类器正确分类为负例的比例。其中 TNR（真负例比例）也称为特异性（specificity）。因此，ROC曲线是以 1-specificity 为横坐标，查全率(recall) 为纵坐标绘制的曲线。
+
+为了绘制ROC曲线，你首先需要用`roc_curve()`函数计算每一个分割阈值对应的FPR和TPR：
+```python
+from sklearn.metrics import roc_curve
+
+fpr, tpr, thresholds = roc_curve(y_train_5, y_scores)
+```
+你可以用下面的代码绘制ROC曲线，如图 3-6 所示：
+```python
+def plot_roc_curve(fpr, tpr, label=None):
+    plt.plot(fpr, tpr, "-b", linewidth=2, label=label)
+    plt.axis([0, 1, 0, 1])
+    plt.plot([0, 1], [0, 1], "--k")
+    plt.xlabel('False Positive Rate', fontsize=16)
+    plt.ylabel('True Postitive Rate', fontsize=16)
+
+plt.figure(figsize=(6,4))
+plot_roc_curve(fpr, tpr)
+plt.show()
+```
+![figure 3-6](./asset/figure3_6.png)
+*图 3-6 ROC曲线*
+
+这里仍旧存在一个权衡：查全率（recall/TPR）越高，则对应的 FPR 也就越高。其中虚线表示完全随机的分类器对应的ROC曲线，一个好的分类器应当尽可能地原理该虚线（向左上角的点靠近）。
+
+一种比较两个分类器性能的指标是测量AUC（area under the curve，曲线下区域）的大小。一个完美的分类器，其ROC对应的AUC大约等于1，而完全随机的分类器对应的AUC大约为0.5。Scikit-Learn提供了一个函数用于计算ROC AUC：
+```python
+>>> from sklearn.metrics import roc_auc_score
+>>> roc_auc_score(y_train_5, y_scores)
+0.97061072797174941
+```
+![suggest](./asset/suggest.png)因为ROC曲线 和 查准率/查全率(PR)曲线 非常相似，你可能难以决定使用哪一个指标。选择指标的一个原则是：如果属于正例的实例非常少，或者是相较于假负例，你更关注假正例时，你应当选择PR曲线，其他情况下你应当旋转门ROC曲线。比如，你通过图3-6的ROC曲线及其对应的ROC AUC值，你会觉得这个分类器的性能很好，但这是因为相较于负例，正例的数量本来就非常少。而通过 PR 曲线可以很容易看出该分类器具有提升的空间（曲线能够更靠近于右上角的点）。
+
+下面，我们训练一个`RandomForestClassifier`，并将它的ROC曲线、ROC AUC值与`SGDClassifier`的进行比较。首先，你需要得到训练集中每一个实例的评分。但是由于`RandomForestClassifier`自身的工作方式（具体见[第七章](#20180201213244)）的原因，它并没有 `decision_function()` 方法。相反，它有一个`predict_proba()`方法，Scikit-Learn中的分类器通常都有这两个方法中的一个。`predict_proba()`方法返回的是一个二维数组，其中每一行代表一个实例，每一列代表一个类别，二维数组中的每一个元素表示指定的实例属于指定类别的可能性（例如：这幅图片有70%的概率表示数字5）：
+```python
+from sklearn.ensemble import RandomForestClassifier
+forest_clf = RandomForestClassifier(random_state=42)
+y_probas_forest = cross_val_predict(forest_clf, X_train, y_train_5,
+                           cv=3, method="predict_proba")
+```
+但画ROC曲线需要的是评分而非可能性。一个简单的方式是将正例的可能性作为评分：
+```python
+y_scores_forest = y_probas_forest[:, 1] # score = proba of positive class
+fpr_forest,tpr_forest,thresholds_forest=roc_curve(y_train_5,y_scores_forest)
+```
+选择，绘制ROC曲线的数据已经准备好了,将之前的ROC曲线也绘制起来以便于比较（图 3-7）：
+```python
+plt.figure(figsize=(8,6))
+plt.plot(fpr, tpr, "b:", label="SGD")
+plot_roc_curve(fpr_forest, tpr_forest, "Random Forest")
+plt.legend(loc="lower right")
+plt.show()
+```
+
+![figure3-7](./asset/figure3_7.png)
+*图 3-7. 比较两个分类器的 ROC 曲线*
+
+从上图中可以看出，`RandomForestClassifier` 的ROC曲线看起来要比 `SGDClassifier` 好得多：它更靠近于左上角，而`RandomForestClassifier`的ROC AUC值也更好：
+```python
+>>> roc_auc_score(y_train_5, y_scores_forest)
+0.99166587519468119
+```
+
+另外，计算其查准率与查全率：
+```python
+>>> precision_score(y_train_5, y_scores_forest>0.5)
+0.98450796421557929
+>>> recall_score(y_train_5, y_scores_forest>0.5)
+0.83231876037631436
+```
+达到了98.45%的查准率和83.23%的查全率，还是不错的。
+
+希望你已经掌握了如何对二类分类器进行训练，为你的任务选择合适的评价指标，通过交叉验证的方法对你的分类器进行评估，根据需要做出查准率/查全率权衡，通过ROC曲线、ROC AUC值比较多个分类器的性能。接下来，让我们的分类器能够识别出更多的数字。
+
+### 多类分类器
+
 
 ## <h2 id="20180201164000">第六章 决策树</h2>
 

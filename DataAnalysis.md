@@ -115,6 +115,13 @@ df = DataFrame(a, columns=df.columns)
 
 ## scikit-learn训练模型
 
+scikit-learn 中模型的调用过程通常为：
+1. 创建模型实例，在创建过程中设置超参数：`model = Model(hyper_parameters)`
+2. 训练模型：`model.fit(X, y)`
+3. 预测
+    - 直接获得结果：`y_preds = model.predict(X)`
+    - 对于分类问题，获得评分，自定义阈值进行分割：`y_scores = model.decision_function(X)`
+
 ### 线性模型
 
 线性模型在 `sklearn.linear_model` 模块中。
@@ -223,3 +230,7 @@ joblib.dump(model, filename_pkl)
 # late
 model_loaded = joblib.load(filename_pkl)
 ```
+
+### 分类模型
+
+计算分类模型的 ROC AUC：`sklearn.metrics.roc_auc(labels, scores)`

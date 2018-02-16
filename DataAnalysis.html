@@ -345,6 +345,17 @@ df <span class="token operator">=</span> DataFrame<span class="token punctuation
 </ul>
 <h2 class="mume-header" id="scikit-learn%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B">scikit-learn训练模型</h2>
 
+<p>scikit-learn 中模型的调用过程通常为：</p>
+<ol>
+<li>创建模型实例，在创建过程中设置超参数：<code>model = Model(hyper_parameters)</code></li>
+<li>训练模型：<code>model.fit(X, y)</code></li>
+<li>预测
+<ul>
+<li>直接获得结果：<code>y_preds = model.predict(X)</code></li>
+<li>对于分类问题，获得评分，自定义阈值进行分割：<code>y_scores = model.decision_function(X)</code></li>
+</ul>
+</li>
+</ol>
 <h3 class="mume-header" id="%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B">线性模型</h3>
 
 <p>线性模型在 <code>sklearn.linear_model</code> 模块中。</p>
@@ -433,6 +444,9 @@ joblib<span class="token punctuation">.</span>dump<span class="token punctuation
 <span class="token comment" spellcheck="true"># late</span>
 model_loaded <span class="token operator">=</span> joblib<span class="token punctuation">.</span>load<span class="token punctuation">(</span>filename_pkl<span class="token punctuation">)</span>
 </pre>
+<h3 class="mume-header" id="%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B">分类模型</h3>
+
+<p>计算分类模型的 ROC AUC：<code>sklearn.metrics.roc_auc(labels, scores)</code></p>
 
       </div>
       <div class="md-sidebar-toc"><ul>
@@ -473,6 +487,7 @@ model_loaded <span class="token operator">=</span> joblib<span class="token punc
 <ul>
 <li><a href="#%E7%94%A8-pickle-%E8%BF%9B%E8%A1%8C%E4%BF%9D%E5%AD%98">用 pickle 进行保存</a></li>
 <li><a href="#%E7%94%A8-externals">用 externals</a></li>
+<li><a href="#%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B">分类模型</a></li>
 </ul>
 </li>
 </ul>

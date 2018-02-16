@@ -355,8 +355,10 @@ code.language-yaml {
 <li><a href="#%E6%B7%B7%E6%B7%86%E7%9F%A9%E9%98%B5confusion-matrix">混淆矩阵(Confusion Matrix)</a></li>
 <li><a href="#%E6%9F%A5%E5%85%A8%E7%8E%87%E5%92%8C%E6%9F%A5%E5%87%86%E7%8E%87">查全率和查准率</a></li>
 <li><a href="#%E6%9F%A5%E5%87%86%E7%8E%87%E6%9F%A5%E5%85%A8%E7%8E%87%E6%9D%83%E8%A1%A1">查准率/查全率权衡</a></li>
+<li><a href="#roc-%E6%9B%B2%E7%BA%BF">ROC 曲线</a></li>
 </ul>
 </li>
+<li><a href="#%E5%A4%9A%E7%B1%BB%E5%88%86%E7%B1%BB%E5%99%A8">多类分类器</a></li>
 </ul>
 </li>
 <li><a href="#h2-id20180201164000%E7%AC%AC%E5%85%AD%E7%AB%A0-%E5%86%B3%E7%AD%96%E6%A0%91h2">第六章 决策树</a></li>
@@ -2152,6 +2154,133 @@ array([[54579, 0],
 <p>好可惜，查准率和查全率不可兼得：查准率越高，查全率就越低，反之亦然。这称为 查准率/查全率权衡。</p>
 <h4 class="mume-header" id="%E6%9F%A5%E5%87%86%E7%8E%87%E6%9F%A5%E5%85%A8%E7%8E%87%E6%9D%83%E8%A1%A1">查准率/查全率权衡</h4>
 
+<p>为了更好地理解这一权衡，让我们看看 <code>SGDClassifier</code>如何做出分类决策。对于每一个实例，它通过一个 <em>决策函数</em> 计算该实例对应的评分。如果评分大于阈值，将该实例就被标记为正例，否则将其标记为负例。<em>图 3-3</em> 显示了分数值从低（左边）到高（右边）对应的一些图片，假定决策阈值在箭头的正中央（在两个5之间）：将有4个真正例（真实值即为5）在阈值分割点的右边，有1个假正例（实际值为6）在阈值分割点的左边。因此，该阈值分割的查准率是80%（5个中有4个）。但实际上有正例6个，但分类器只检测出4个，所以查全率为67%（6个中有4个）。如果你将分割阈值增大（将阈值分割点像箭头右侧移动），数字6对应的图片将会由假正例变为真负例，因此，分类器的查准率提高了（在该例子中，查准率达到了100%），但同时有一个真正例变为了假负例，查全率降低为50% 。而降低分割阈值会增大查全率，但减小查准率。</p>
+<p><img src="./asset/figure3_3.png" alt="figure 3-3"><br>
+<em>图 3-3. 检测阈值与查准率/查全率权衡</em></p>
+<p>Scikit-Learn并没有提供函数用于直接对分割阈值进行修改，但你可以通过调用函数获得预测的评分。想要获得预测评分，可以调用 <code>decision_function()</code> 方法，它将为每个实例返回一个评分，之后你可以基于这些评分尝试你希望设置的分割阈值：</p>
+<pre class="language-python">y_scores <span class="token operator">=</span> sgd_classifier<span class="token punctuation">.</span>decision_function<span class="token punctuation">(</span><span class="token punctuation">[</span>some_digit<span class="token punctuation">]</span><span class="token punctuation">)</span>
+y_scores <span class="token comment" spellcheck="true"># 输出为 array([ 303.18076405])</span>
+</pre>
+<p>将分割阈值设置为0：</p>
+<pre class="language-python">threshold <span class="token operator">=</span> <span class="token number">0</span>
+y_some_digit_pred <span class="token operator">=</span> <span class="token punctuation">(</span>y_scores <span class="token operator">></span> threshold<span class="token punctuation">)</span>
+y_some_digit_pred
+</pre>
+<p>输出为：<code>array([ True], dtype=bool)</code></p>
+<p>将分割阈值设置为0，得到的结果与之前通过 <code>predict()</code> 函数获得的结果相同。接下来我们提高分割阈值：</p>
+<pre class="language-python">threshold <span class="token operator">=</span> <span class="token number">400</span>
+y_some_digit_pred <span class="token operator">=</span> <span class="token punctuation">(</span>y_scores <span class="token operator">></span> threshold<span class="token punctuation">)</span>
+y_some_digit_pred
+</pre>
+<p>输出为：<code>array([False], dtype=bool)</code></p>
+<p>这就验证了增大分割阈值会降低查全率。实际表示5的图片，在分割阈值为0时，被分类器正确地识别为5，而在分割阈值为400时，被分类器识别为非5。</p>
+<p>所以，你该如何取分割阈值呢？首先，你还是需要通过 <code>cross_val_predict</code> 以K折交叉验证的方式获得训练集中每个实例对应的评分，这需要指定 <code>cross_val_score</code> 的 <code>method</code> 参数：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>model_selection <span class="token keyword">import</span> cross_val_predict
+y_scores <span class="token operator">=</span> cross_val_predict<span class="token punctuation">(</span>sgd_classifier<span class="token punctuation">,</span> X_train<span class="token punctuation">,</span> y_train_5<span class="token punctuation">,</span>
+                             cv<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> method<span class="token operator">=</span><span class="token string">"decision_function"</span><span class="token punctuation">)</span>
+</pre>
+<p>有了这些评分之后，你可以通过 <code>precision_recall_curve()</code> 函数计算所有可能的分割阈值对应的查准率与查全率：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>metrics <span class="token keyword">import</span> precision_recall_curve
+<span class="token comment" spellcheck="true"># hack to work around issue #9589 introduced in Scikit-Learn 0.19.0</span>
+<span class="token keyword">if</span> y_scores<span class="token punctuation">.</span>ndim <span class="token operator">==</span> <span class="token number">2</span><span class="token punctuation">:</span>
+    y_scores <span class="token operator">=</span> y_scores<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span>
+precisions<span class="token punctuation">,</span> recalls<span class="token punctuation">,</span> thresholds <span class="token operator">=</span> precision_recall_curve<span class="token punctuation">(</span>y_train_5<span class="token punctuation">,</span> y_scores<span class="token punctuation">)</span>
+</pre>
+<blockquote>
+<p>注：此处的代码与书本上的略有不同(与作者提供的源码系统)，因为 SCikit-Learn 0.19.0 版本的 <code>cross_val_predict()</code> 函数自身存在的<a href="https://github.com/scikit-learn/scikit-learn/issues/9589">#9589问题</a>，故代码做了一些修改。</p>
+</blockquote>
+<p>你可以通过 Matplotlib 提供的函数，将查准率与查全率随分割阈值变化的曲线绘制出来（如图 3-4 所示）：</p>
+<pre class="language-python"><span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+
+<span class="token keyword">def</span> <span class="token function">plot_precision_recall_vs_threshold</span><span class="token punctuation">(</span>precisions<span class="token punctuation">,</span> recalls<span class="token punctuation">,</span> thresholds<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>thresholds<span class="token punctuation">,</span> precisions<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">"b--"</span><span class="token punctuation">,</span> label<span class="token operator">=</span><span class="token string">'Precision'</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>thresholds<span class="token punctuation">,</span> recalls<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">"g-"</span><span class="token punctuation">,</span> label<span class="token operator">=</span><span class="token string">"Recall"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>xlabel<span class="token punctuation">(</span><span class="token string">'Threshold'</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>legend<span class="token punctuation">(</span>loc<span class="token operator">=</span><span class="token string">'center left'</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>ylim<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1.05</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+plot_precision_recall_vs_threshold<span class="token punctuation">(</span>precisions<span class="token punctuation">,</span> recalls<span class="token punctuation">,</span> thresholds<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/figure3_4.png" alt="figure 3-4"><br>
+<em>图 3-4. 每个检测阈值对应的查准率与查全率</em></p>
+<p><img src="./asset/note.png" alt="note">你也许会奇怪，在上图中为什么查准率曲线要比查全率曲线更加“曲折”（也就是不稳定，从图中看出查准率并不是单调递增的）？这是因为查准率有时候在你增大阈值时，反而会减小（虽然总体上讲是阈值越大，查准率就越大）。要理解造成这种情况的原因，你需要回过头看看图3-3，你将分割阈值从中间位置向右移动一格（跳过一张图片），查准率从 4/5 (80%) 下降为 3/4 (75%)。另一方面，计算查全率时，其分母是所有正例的个数，对于一个给定的数据集，这个值是固定不变的，其分子是真正例的个数，而分割阈值增大后，分子不会增加，只会减少，所有查全率看起来要比查准率的曲线平滑。</p>
+<p>现在你可以很容易地为你的任务选择一个好的分割阈值。另一种选择好的 查准率/查准率权衡 的方式是直接以查全率和查准率为横纵坐标绘制曲线（如图 3-5 所示）：<br>
+<img src="./asset/figure3_5.png" alt="figure 3-5"><br>
+<em>图 3-5. 查准率-查全率曲线</em></p>
+<p>从图中你可以看到在查全率增大到 80% 以后，查准率急剧下降，你应该在急剧下降之前选择你的查准率/查全率权衡，例如选择查全率为60%左右。当然，具体的选择应该根据你的项目进行。例如，你需要的查准率为90%，你查看图 3-4（需要进行放大），发现需要将分割阈值设置在800左右，为了实现指定的查准率，你不能调用 <code>predict()</code> 方法，实现代码如下：</p>
+<pre class="language-python">y_train_pred_90 <span class="token operator">=</span> <span class="token punctuation">(</span>y_scores <span class="token operator">></span> <span class="token number">800</span><span class="token punctuation">)</span>
+</pre>
+<p>让我们测试一下该分割阈值下的查准率与查全率：</p>
+<pre class="language-python"><span class="token operator">>></span><span class="token operator">></span> precision_score<span class="token punctuation">(</span>y_train_5<span class="token punctuation">,</span> y_train_pred_90<span class="token punctuation">)</span>
+<span class="token number">0.9015304649148137</span>
+<span class="token operator">>></span><span class="token operator">></span> recall_score<span class="token punctuation">(</span>y_train_5<span class="token punctuation">,</span> y_train_pred_90<span class="token punctuation">)</span>
+<span class="token number">0.57590850396605797</span>
+</pre>
+<p>很好，你已经得到了一个查准率为90%的分类器（或者接近该查准率）! 正如你所见，如何查准率的分类器都非常容易创建：只需要将分割阈值设置的足够高，你就完成了。但如果查准率很高而查全率很低的分类器也没什么卵用。<br>
+<img src="./asset/suggest.png" alt="suggest">如果老板叫你实现一个查准率为99%的分类器，你应该反问：“您打算查全率达到多少”。</p>
+<h4 class="mume-header" id="roc-%E6%9B%B2%E7%BA%BF">ROC 曲线</h4>
+
+<p>ROC（receiver operating characteristic,接收者操作特征）曲线是另一种分类器常用的工具。它与查准率/查全率曲线非常相似，但并不是以查全率和查准率为横纵坐标，而是以假正例的比例和真正例的比例（也称为查全率）为横纵坐标。其中 FPR（假正例比例，false positive rate）是指在所有的负例中，被分类器误分类为正例的比例，其值等于1减去真负例比例，真负例比例就是在所有的负例中，被分类器正确分类为负例的比例。其中 TNR（真负例比例）也称为特异性（specificity）。因此，ROC曲线是以 1-specificity 为横坐标，查全率(recall) 为纵坐标绘制的曲线。</p>
+<p>为了绘制ROC曲线，你首先需要用<code>roc_curve()</code>函数计算每一个分割阈值对应的FPR和TPR：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>metrics <span class="token keyword">import</span> roc_curve
+
+fpr<span class="token punctuation">,</span> tpr<span class="token punctuation">,</span> thresholds <span class="token operator">=</span> roc_curve<span class="token punctuation">(</span>y_train_5<span class="token punctuation">,</span> y_scores<span class="token punctuation">)</span>
+</pre>
+<p>你可以用下面的代码绘制ROC曲线，如图 3-6 所示：</p>
+<pre class="language-python"><span class="token keyword">def</span> <span class="token function">plot_roc_curve</span><span class="token punctuation">(</span>fpr<span class="token punctuation">,</span> tpr<span class="token punctuation">,</span> label<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>fpr<span class="token punctuation">,</span> tpr<span class="token punctuation">,</span> <span class="token string">"-b"</span><span class="token punctuation">,</span> linewidth<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> label<span class="token operator">=</span>label<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>axis<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">"--k"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>xlabel<span class="token punctuation">(</span><span class="token string">'False Positive Rate'</span><span class="token punctuation">,</span> fontsize<span class="token operator">=</span><span class="token number">16</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>ylabel<span class="token punctuation">(</span><span class="token string">'True Postitive Rate'</span><span class="token punctuation">,</span> fontsize<span class="token operator">=</span><span class="token number">16</span><span class="token punctuation">)</span>
+
+plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+plot_roc_curve<span class="token punctuation">(</span>fpr<span class="token punctuation">,</span> tpr<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/figure3_6.png" alt="figure 3-6"><br>
+<em>图 3-6 ROC曲线</em></p>
+<p>这里仍旧存在一个权衡：查全率（recall/TPR）越高，则对应的 FPR 也就越高。其中虚线表示完全随机的分类器对应的ROC曲线，一个好的分类器应当尽可能地原理该虚线（向左上角的点靠近）。</p>
+<p>一种比较两个分类器性能的指标是测量AUC（area under the curve，曲线下区域）的大小。一个完美的分类器，其ROC对应的AUC大约等于1，而完全随机的分类器对应的AUC大约为0.5。Scikit-Learn提供了一个函数用于计算ROC AUC：</p>
+<pre class="language-python"><span class="token operator">>></span><span class="token operator">></span> <span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>metrics <span class="token keyword">import</span> roc_auc_score
+<span class="token operator">>></span><span class="token operator">></span> roc_auc_score<span class="token punctuation">(</span>y_train_5<span class="token punctuation">,</span> y_scores<span class="token punctuation">)</span>
+<span class="token number">0.97061072797174941</span>
+</pre>
+<p><img src="./asset/suggest.png" alt="suggest">因为ROC曲线 和 查准率/查全率(PR)曲线 非常相似，你可能难以决定使用哪一个指标。选择指标的一个原则是：如果属于正例的实例非常少，或者是相较于假负例，你更关注假正例时，你应当选择PR曲线，其他情况下你应当旋转门ROC曲线。比如，你通过图3-6的ROC曲线及其对应的ROC AUC值，你会觉得这个分类器的性能很好，但这是因为相较于负例，正例的数量本来就非常少。而通过 PR 曲线可以很容易看出该分类器具有提升的空间（曲线能够更靠近于右上角的点）。</p>
+<p>下面，我们训练一个<code>RandomForestClassifier</code>，并将它的ROC曲线、ROC AUC值与<code>SGDClassifier</code>的进行比较。首先，你需要得到训练集中每一个实例的评分。但是由于<code>RandomForestClassifier</code>自身的工作方式（具体见<a href="#20180201213244">第七章</a>）的原因，它并没有 <code>decision_function()</code> 方法。相反，它有一个<code>predict_proba()</code>方法，Scikit-Learn中的分类器通常都有这两个方法中的一个。<code>predict_proba()</code>方法返回的是一个二维数组，其中每一行代表一个实例，每一列代表一个类别，二维数组中的每一个元素表示指定的实例属于指定类别的可能性（例如：这幅图片有70%的概率表示数字5）：</p>
+<pre class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>ensemble <span class="token keyword">import</span> RandomForestClassifier
+forest_clf <span class="token operator">=</span> RandomForestClassifier<span class="token punctuation">(</span>random_state<span class="token operator">=</span><span class="token number">42</span><span class="token punctuation">)</span>
+y_probas_forest <span class="token operator">=</span> cross_val_predict<span class="token punctuation">(</span>forest_clf<span class="token punctuation">,</span> X_train<span class="token punctuation">,</span> y_train_5<span class="token punctuation">,</span>
+                           cv<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> method<span class="token operator">=</span><span class="token string">"predict_proba"</span><span class="token punctuation">)</span>
+</pre>
+<p>但画ROC曲线需要的是评分而非可能性。一个简单的方式是将正例的可能性作为评分：</p>
+<pre class="language-python">y_scores_forest <span class="token operator">=</span> y_probas_forest<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span> <span class="token comment" spellcheck="true"># score = proba of positive class</span>
+fpr_forest<span class="token punctuation">,</span>tpr_forest<span class="token punctuation">,</span>thresholds_forest<span class="token operator">=</span>roc_curve<span class="token punctuation">(</span>y_train_5<span class="token punctuation">,</span>y_scores_forest<span class="token punctuation">)</span>
+</pre>
+<p>选择，绘制ROC曲线的数据已经准备好了,将之前的ROC曲线也绘制起来以便于比较（图 3-7）：</p>
+<pre class="language-python">plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>fpr<span class="token punctuation">,</span> tpr<span class="token punctuation">,</span> <span class="token string">"b:"</span><span class="token punctuation">,</span> label<span class="token operator">=</span><span class="token string">"SGD"</span><span class="token punctuation">)</span>
+plot_roc_curve<span class="token punctuation">(</span>fpr_forest<span class="token punctuation">,</span> tpr_forest<span class="token punctuation">,</span> <span class="token string">"Random Forest"</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>legend<span class="token punctuation">(</span>loc<span class="token operator">=</span><span class="token string">"lower right"</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</pre>
+<p><img src="./asset/figure3_7.png" alt="figure3-7"><br>
+<em>图 3-7. 比较两个分类器的 ROC 曲线</em></p>
+<p>从上图中可以看出，<code>RandomForestClassifier</code> 的ROC曲线看起来要比 <code>SGDClassifier</code> 好得多：它更靠近于左上角，而<code>RandomForestClassifier</code>的ROC AUC值也更好：</p>
+<pre class="language-python"><span class="token operator">>></span><span class="token operator">></span> roc_auc_score<span class="token punctuation">(</span>y_train_5<span class="token punctuation">,</span> y_scores_forest<span class="token punctuation">)</span>
+<span class="token number">0.99166587519468119</span>
+</pre>
+<p>另外，计算其查准率与查全率：</p>
+<pre class="language-python"><span class="token operator">>></span><span class="token operator">></span> precision_score<span class="token punctuation">(</span>y_train_5<span class="token punctuation">,</span> y_scores_forest<span class="token operator">></span><span class="token number">0.5</span><span class="token punctuation">)</span>
+<span class="token number">0.98450796421557929</span>
+<span class="token operator">>></span><span class="token operator">></span> recall_score<span class="token punctuation">(</span>y_train_5<span class="token punctuation">,</span> y_scores_forest<span class="token operator">></span><span class="token number">0.5</span><span class="token punctuation">)</span>
+<span class="token number">0.83231876037631436</span>
+</pre>
+<p>达到了98.45%的查准率和83.23%的查全率，还是不错的。</p>
+<p>希望你已经掌握了如何对二类分类器进行训练，为你的任务选择合适的评价指标，通过交叉验证的方法对你的分类器进行评估，根据需要做出查准率/查全率权衡，通过ROC曲线、ROC AUC值比较多个分类器的性能。接下来，让我们的分类器能够识别出更多的数字。</p>
+<h3 class="mume-header" id="%E5%A4%9A%E7%B1%BB%E5%88%86%E7%B1%BB%E5%99%A8">多类分类器</h3>
+
 <h2 class="mume-header" id="h2-id20180201164000%E7%AC%AC%E5%85%AD%E7%AB%A0-%E5%86%B3%E7%AD%96%E6%A0%91h2"><h2 id="20180201164000">第六章 决策树</h2></h2>
 
 <h2 class="mume-header" id="h2-id20180201213244%E7%AC%AC%E4%B8%83%E7%AB%A0-%E9%9B%86%E6%88%90%E5%AD%A6%E4%B9%A0%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%B7%B1%E6%9E%97h2"><h2 id="20180201213244">第七章 集成学习与随机深林</h2></h2>
@@ -2502,8 +2631,10 @@ array([[54579, 0],
 <li><a href="#%E6%B7%B7%E6%B7%86%E7%9F%A9%E9%98%B5confusion-matrix">混淆矩阵(Confusion Matrix)</a></li>
 <li><a href="#%E6%9F%A5%E5%85%A8%E7%8E%87%E5%92%8C%E6%9F%A5%E5%87%86%E7%8E%87">查全率和查准率</a></li>
 <li><a href="#%E6%9F%A5%E5%87%86%E7%8E%87%E6%9F%A5%E5%85%A8%E7%8E%87%E6%9D%83%E8%A1%A1">查准率/查全率权衡</a></li>
+<li><a href="#roc-%E6%9B%B2%E7%BA%BF">ROC 曲线</a></li>
 </ul>
 </li>
+<li><a href="#%E5%A4%9A%E7%B1%BB%E5%88%86%E7%B1%BB%E5%99%A8">多类分类器</a></li>
 </ul>
 </li>
 <li><a href="#h2-id20180201164000%E7%AC%AC%E5%85%AD%E7%AB%A0-%E5%86%B3%E7%AD%96%E6%A0%91h2">第六章 决策树</a></li>
