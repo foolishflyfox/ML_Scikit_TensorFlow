@@ -3033,6 +3033,205 @@ $$J(\theta)=MSE(\theta)+\alpha\sum^n_{i=1}\vert\theta_i\vert$$
 ![figure 4-18](./asset/figure4_18.png)
 *图 4-18. Lasso 回归*
 
+Lasso 回归的一个重要特点是其趋向于完全限制不重要的特征的权重（例如，将这些权重设置为0）。例如在右图中的红色虚线（$\alpha=10^{-7}$）看起来像一个二次函数，是准线性的：高次的特征对应的权重几乎都等于0。换而言之，Lasso 回归自动地进行特征的选择，并输出一个稀疏模型（例如，只有很少的非0特征权重）。
+
+![figure 4-19](./asset/figure4_19.png)
+*图4-19. Lasso回归和岭回归*
+
+你可以通过图 4-19 明白：在左上角的图中，背景图中的等高线(椭圆形状)表示一个未正规化的MSE损失函数（$\alpha=0$）,其中的白点绘制的折线就是批量梯度下降的求解过程。前景图中的等高线（菱形）表示使用了 $l_1$ 范式作为惩罚项，其中其中的三角形绘制的折线表示在这种惩罚项下，批量梯度下降的求解过程（其中$\alpha\rightarrow\infty$）。注意，该路径中，显示 $\theta_1$ 变为0，之后$\theta_2$不断减小直至为0。在右上角的图中，等高线图表示以MSE的值加上一个  $l_1\times\alpha$ 作为新的损失函数，其中$\alpha=0.5$。该批量梯度下降首先到达$\theta_2=0$处，之后到达全局最小值处。下面的两幅图显示了相同的操作，不同点在于使用了$l_2$作为惩罚项。可以看到，正规化的最小值处比非正规化最小值更加靠近于原点位置（$\theta=0$），但权重并不会完全变为0。
+
+![suggest](./asset/suggest.png)在Lasso损失函数中，在末端的路径不太稳定，这是因为在 $\theta_2=0$ 处斜率发生了突变。你需要逐渐减小学习率使得路径向全局最小值处收敛。
+
+当$\theta_i=0$ (其中i=1,2,...,n)，Lasso损失函数与MSE相同。等式 4-11 显示了Lasso回归的次梯度向量的求解：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-11. Lasso回归次梯度向量*
+$$g(\theta,J)=\nabla_\theta MSE(\theta) + \alpha\left\lgroup\begin{matrix} sign(\theta_1) \\ \\ sign(\theta_2) \\ \\ \vdots \\ \\ sign(\theta_n)\end{matrix}\right\rgroup \textrm{where}\ sign(\theta_i)=\begin{cases}-1 &;\theta_i<0 \\ 0 &;\theta_i=0 \\ +1 &;\theta_i>0   \end{cases}$$
+
+下面是用 Scikit-Learn 中的 Lasso 类的代码。你也可以用 `SGDRegressor(penalty="l1")`。
+```python
+>>> from sklearn.linear_model import Lasso
+>>> lasso_reg = Lasso(alpha=0.1)
+>>> lasso_reg.fit(X, y)
+>>> lasso_reg.predict([[1.5]])
+array([ 4.55514672])
+```
+
+#### 弹性网络
+
+弹性网络处于岭回归和Lasso回归之间。正规化项是由岭回归和Lasso回归的正规化项组成的，你可以设置组成的比例 $r$。当 $r=0$ 时，弹性网络变为了岭回归，当 $r=1$ 时，弹性网络变为了 Lasso 回归，如等式（4-12所示）：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-12.弹性网络的损失函数*
+$$J(\theta)=MSE(\theta)+r\alpha\sum^n_{i=1}\vert\theta_i\vert+\frac{1-r}{2}\alpha\sum^n_{i=1}\theta_i^2$$
+
+那么，你应该选择线性回归、岭回归、Lasso回归 还是 弹性网络呢？通常来说，我们应该加上正规化项，因此你最好不要使用纯线性回归。岭回归默认是一个好的模型，但如果你猜测只有少量的特征时真正有用的，你应当使用 Lasso 回归或者是天行网络，因为它们有能力将无用的特征降低为0。一般来讲，弹性网络要比Lasso 回归好，因为在特征数量比实力数量多时，或者有多个特征时强相关时，Lasso 会表现地不规律。
+
+下面是使用 Scikit-Learn 中的 `ElasticNet` 的一个简单的例子（`l1_ratio` 对应组合比 $r$）:
+```python
+>>> from sklearn.linear_model import ElasticNet
+>>> elastic_net = ElasticNet(alpha=0.1, l1_ratio=0.5)
+>>> elastic_net.fit(X, y)
+>>> elastic_net.predict([[1.5]])
+array([ 4.5613437])
+```
+
+#### 早期终止
+
+一种对迭代学习算法（如梯度下降）进行正规化的非同寻常的方式是当验证集上的错误达到最小值时，立刻停止训练。这称为早期终止。图 4-20 表示一个复杂的模型（在本例中就是一个高次的多项式回归模型）使用批量梯度下降的方式进行训练。随着轮数的进行，算法在训练集上的预测误差（RSME）越来越小，在确认集上的误差也是越来越小。经过一段时间之后，确认集上的误差停止减小，甚至开始上升。这表明模型开始过拟合于训练集。通过早期终止，你只需要在确认集上的误差达到最小值时就停止训练即可。这种正规化思想非常简单高效，Geoffrey Hinton 称之为 “漂亮的免费午餐(beautiful free lunch)”。
+![figure 4-20](./asset/figure4_20.png)
+*图 4-20. 早期终止的正规化方法*
+
+![suggest](./asset/suggest.png)对于随机梯度下降和小批梯度下降的曲线不会如此平滑，因此你可能不知道在确认集上是否真的到达最小值处。一种解决思路是，在确认集上的误差多次高于最小值（此时，你确认模型不会变得更好了）时停止训练，或者是将参数回退到之前的在确认集上误差最小处。
+
+下面是早期终止的一个简单实现：
+```python
+from sklearn.base import clone
+sgd_reg = SGDRegressor(n_iter=1, warm_start=True, penalty=None,
+                           learning_rate="constant", eta0=0.0005)
+minimum_val_error = float("inf") best_epoch = None
+best_model = None
+for epoch in range(1000):
+sgd_reg.fit(X_train_poly_scaled, y_train) # continues where it left off y_val_predict = sgd_reg.predict(X_val_poly_scaled)
+val_error = mean_squared_error(y_val_predict, y_val)
+if val_error < minimum_val_error:
+            minimum_val_error = val_error
+            best_epoch = epoch
+            best_model = clone(sgd_reg)
+```
+注意，参数 `warm_start=True` 在 `fit()` 方法被调用时，在上一次的基础上进行训练而不是从原来的状态重新训练。
+
+### 逻辑回归
+
+我们在第一章中讨论过，一些回归算法可以用于分类任务（反之亦然）。逻辑回归通常用于评估一个实例属于特定类别的概率（例如 ，一封邮件是垃圾邮件的概率）。如果评估的概率大于50%，那么模型就预测该实例属于这一类别（称为正类，标记为“1”），或者是预测器不属于这一类（称为父类，标记为“0”）。这就创建了一个二分类器。
+
+#### 评估可能性
+
+那么它是如何工作的呢？类似于线性回归模型，一个逻辑回归模型计算输入特征的加权和（外加一个偏置项），但是并不像线性回归模型一样直接输出结果，而是输出结果的逻辑值（见等式 4-13）：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-13. 逻辑回归模型计算概率（向量形式）*
+$$\hat p = h_\theta(\bold x)=\sigma(\theta^T\cdot\bold x)$$
+
+逻辑的(logistic)——也称为分对数(logit)，记为 $\sigma(\cdot)$——是sigmoid函数（类似 S 的形状），其输出是0~1之间的一个数字。其定义如等式 4-4 所示，对应的图形如 图 4-21 所示：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-14. 逻辑函数*
+$$\sigma(t)=\frac1{1+e^{-t}}$$
+
+![figure 4-21](./asset/figure4_21.png)
+*图 4-21. 逻辑函数*
+
+一旦逻辑回归模型已经计算出实例$\bold x$属于正类的概率 $\hat p=h_\theta(\bold x)$，就能非常简单地做出预测$\hat y$ （见等式 4-15）：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-15. 逻辑回归模型的预测*
+$$\hat y = \begin{cases} 0 &;\hat p < 0.5 \\ 1 &;\hat p \ge 0.5\end{cases}$$
+
+注意当 $t < 0$ 时，$\sigma(t)<0.5$；当 $t\ge0$ 时，$\sigma(t)\ge0.5$。因此，如果 $\theta^T\cdot\bold x$ 为正，预测为1，为负，预测为0。
+
+#### 训练和损失函数
+
+好的，你现在找到了一个逻辑回归模型如何进行概率评估，并做出预测。那么它是不是就完成训练了呢？我们训练的目标是设置参数向量 $\theta$ 使得模型对正例($y=1$)能够评估出一个高概率，对负例($y=0$)能够评估出一个低概率。这一思路通过等式 4-16 的损失函数实现：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-16. 单个训练实例的损失函数*
+$$c(\theta)=\begin{cases}-log(\hat p)&;y=1 \\ -log(1-\hat p) &;y=0\end{cases}$$
+
+这种方式的损失函数可行，因为当 $t$ 接近于 0 时，$-log(t)$ 非常大，因此预测一个正例的概率接近于0会产生很大的损失，同理，如果模型预测一个负例的概率接近于1也会产生很大的损失。另一方面，当 $t$ 接近于 1 时，$-log(t)$ 接近于 0，因此我们如果预测正例的概率接近于1或者是预测负例的概率接近于0，都会得到一个接近于0的损失，这正是我们希望得到的。
+
+对所有训练集上的损失函数只需要简单地对训练集中的每一个实例的损失函数值求平均值即可。我们可以通过单个表达式来表示(你可以简单地验证)，称为 逻辑损失，如等式 4-17所示：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-17. 逻辑回归损失函数(对数损失)*
+$$J(\theta)=-\frac1m\sum^m_{i=1}[y^{(i)}log(\hat p^{(i)})+(1-y^{(i)})log(1-\hat p^{(i)})]$$
+
+坏消息是我们没有能够直接求出上式最小值对应的$\theta$的公式（及不能使用正规方程的方式进行求解）。但一个好消息是，该损失函数是收敛的，因此我们使用梯度下降(或者是其他的优化算法)一定可以找到全局最小值（如果你的学习率不是过大，并且等待足够长时间）。该损失函数对模型第 $j$ 个参数 $\theta_j$ 的偏导数如等式 4-18 所示：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-18. 逻辑回归损失函数的偏导数*
+$$\frac{\partial}{\partial\theta_j}J(\theta)=\frac1m\sum^m_{i=1}(\sigma(\theta^T\cdot\bold x^{(i)})-y^{(i)})x_j^{(i)}$$
+
+该等式与等式 4-5 非常类似：对于每个实例，它计算预测误差，然后乘以该实例的第 $j$ 个特征值，之后将所有训练实例按这种方法处理并求平均值。对于批量梯度下降，你可以用这种方法得到包含所有偏导数的梯度向量；对于随机梯度下降，你可以每次只使用一个实例进行该算法，对于小批梯度下降，你可以使用每次使用一小批量。
+
+#### 决策边界
+
+我们使用鸢尾花(iris)的数据集来说明逻辑回归。这是一个很有名的数据集，包含了3种不同品种，共150朵鸢尾花的花萼、花瓣的长度与宽度，这3种品种分别为：Iris-Setosa，Iris-Versicolor 和 Iris-Virginica （见图 4-22）。
+
+![figure 4-22](./asset/figure4_22.png)
+
+我们试着建立一个分类器，基于花萼的宽度特性来判断是否属于 Iris-Virginica，我们首先需要加在数据：
+```python
+>>> from sklearn import datasets
+>>> iris = datasets.load_iris()
+>>> list(iris.keys())
+['data', 'target', 'target_names', 'DESCR', 'feature_names']
+>>> X = iris['data'][:, 3:] # 花萼宽度
+>>> y = (iris['target']==2).astype(np.int) # 1 表示 Iris-Virginico
+```
+让我们来训练一个逻辑回归模型：
+```python
+from sklearn.linear_model import LogisticRegression
+
+log_reg = LogisticRegression()
+log_reg.fit(X, y)
+```
+我们来看看对于花萼长度从0到3cm的花，模型预测的概率是多少：
+```python
+X_new = np.linspace(0, 3, 1000).reshape(-1, 1)
+y_proba = log_reg.predict_proba(X_new)
+plt.figure(figsize=(8,6))
+plt.plot(X_new, y_proba[:, 1], "g-", label="Iris-Virginica")
+plt.plot(X_new, y_proba[:, 0], "b--", label="Not Iris-Virginica")
+plt.legend(loc="center left")
+plt.show()
+```
+![figure 4-23](./asset/figure4_23.png)
+*图 4-23. 预测概率和决策边界*
+
+Iris-Virginica（用三角形表示）的花萼宽度从1.4cm ~ 2.5cm，其他鸢尾花（用方块表示）的花萼宽度从 0.1cm ~ 1.8cm。可以看到两者存在重叠的部分。花萼宽度大于 2cm，分类器非常确信该花属于 Iris-Virginica（输出的概率较大），而小于 1cm，分类器确信该花不属于 Iris-Virginica（输出的概率较小）。在两者之间的花萼宽度，分类器并不是很确定其类别，当你对其进行类别预测时（使用`predict()` 方法，而不是使用`predict_proba()` 方法），分类器将会返回一个它认为只可能的类别。因此，在宽度为 1.6cm 处存在一个决策边界，在此处，概率为0.5：如果花萼宽度大于1.6cm，分类器预测该花为 Iris-Virginica，否则预测该花不是 Iris-Virginica（即使不是那么确信）：
+```python
+>>> log_reg.predict([[1.7],[1.5]])
+array([1, 0])
+```
+
+图 4-24 显示了使用相同的数据集，而使用两个特征进行判断：花萼的宽度和长度。经过训练以后，逻辑回归分类器可以通过两个特征判断新的花属于 Iris-Virginica 的概率。其中虚线表示概率为50%的点：这是模型的决策边界。注意，该边界是一条线而非一个点。每一条平行的线表示相同概率的点的集合（从 左下的15%，到右上的90%）。在 90%的概率线以上的实例，其属于 Iris-Virginica 的概率大于 90%。
+![figure 4-24](./asset/figure4_24.png)
+*图 4-24. 线性决策边界*
+
+类似于其他的线性回归模型，逻辑回归模型能够通过 $l_1$ 或 $l_2$ 惩罚项进行正规化。Scikit-Learn实际上默认使用 $l_2$ 作为惩罚项。
+
+![note](./asset/note.png)Scikit-Learn 的 `LogisticRegression` 模型并不是使用 `alpha` 参数来控制正规化程度的，而是使用其倒数：C。C 越大，正规化程度越小。
+
+#### Softmax 回归
+
+逻辑回归模型可以直接泛化为支持多类型的分类器，而不需要训练、组合多个二分类器（如我们在第三章中讨论的那样）。这称为 Softmax 回归，或称为 多项逻辑回归 （Multinomial Logistic Regression）。
+
+这种想法非常简单：给定一个实例 $\bold x$，Softmax 回归模型首先为每一个类 $k$ 计算一个评分 $s_k(\bold x)$，之后使用 softmax 函数 （归一化指数）评估对应类为相应评分的概率。计算 $s_k(\bold x)$ 的公式应该会看起来非常熟悉，与线性回归预测时的等式非常相似(见 等式 4-19)。
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-19. 类k对应的Softmax评分*
+$$s_k(\bold x) = \theta_k^T\cdot\bold x$$
+
+每一个类都有其专有的参数向量 $\theta_k$。所有这些向量通常被存放在参数矩阵 $\Theta$ 中的一行中。
+
+在你计算每个类对于每个实例 $\bold x$ 的评分后 ，你可以将评分代入到 softmax 函数中从而计算出实例对于类 $k$ 的概率 $\hat p_k$ （等式 4-20 所示）：以评分为指数，$e$ 为底数计算一个值，之后对他们进行归一化（除以计算出的值的和）。
+
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-20. Softmax function*
+$$\hat p_k = \sigma(\bold s(\bold x))_k=\frac{exp(s_k(\bold x))}{\sum^K_{j=1}exp(s_j(\bold x))}$$
+
+- K 是类的数量
+- $\bold s(\bold x)$ 是包含了每一个类对于实例$\bold x$评分的一个向量
+- $\sigma(\bold s(\bold x)_ k)$ 是对实例 $\bold x$ 属于给定的类 $k$ 的概率值
+
+类似于逻辑回归分类器，Softmax 回归分类器将概率最大的类作为预测类，如等式 4-21 所示：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-21。 Softmax回归分类器预测*
+$$\hat y = \underset{k}{argmax}\ \sigma(\bold s(\bold x))_ k=\underset{k}{argmax}\ s_k(\bold x) = \underset{k}{argmax}\ (\theta_k^T\cdot \bold x) $$
+
+- $argmax$ 操作返回传入参数中变量最大的值。在等式中，返回的是概率最大的 $\sigma(\bold s(\bold x))_ k$ 对应的 $k$ 。
+![suggest](./asset/suggest.png)Softmax 回归分类器每次返回一个类（注意是多类型而不是多输出），所以各类型之间应该是互斥的，如不同种类的植物。你不能使用它来识别一张图片中的多个人。
+
+现在，你知道了如何计算模型的概率并进行预测，让我们看看如何进行训练。我们的目标是得到一个能够计算出概率最高目标类的模型(当然其他的类概率相对较低)。最小化损失函数如等式 4-22 所示，称为交叉熵，应该能够实现这一目标，因为当一个模型预测了一个低可能性的目标类时，它将受到惩罚。交叉熵常用于评估多个类的概率评估的质量（我们将在后面的章节中多次使用）：
+&nbsp;&nbsp;&nbsp;&nbsp;*等式 4-22. 交叉熵代价函数*
+$$J(\Theta)=-\frac1m\sum^m_{i=1}\sum^K_{k=1}y_k^{(i)}log(\hat p_k^{(i)})$$
+
+- $y_k^{(i)}$ 表示在对于第 $i$ 个实例而言目标类等于 $k$ 时该值是1；否则等于0。
+
+注意，当只有两个类(K=2)时，该损失函数等于逻辑回归的损失函数（逻辑损失，见等式4-17）。
+
+---
+**交叉熵**
+交叉熵的概念起源于信息论。假定你需要高效的传送每天的天气信息。如果一共有8种不同的天气（晴、雨 等等），你可以对每种天气都用3个比特进行编码，因为 $2^3=8$。然而，如果你认为天气主要以晴天为主，那么将晴天编码为1个比特（0），而其他天气编码为4个比特（以1开始）。交叉熵实际测量的是每次发送的平均比特数。如果天气状况像你预料的那样，交叉熵将等于天气自身的熵。如果你的假定是错误的（例如天气以雨天为主），那么交叉熵将增大一个 KL-散度。
+
+两个概率 $p$ 和 $q$ 之间的交叉熵定义为：$H(p,q)=-\sum_xp(x)log\ q(x)$，这是在概率离散分布的情况下。
+
+---
+
+上面的损失函数关于 $\theta_k$ 的梯度向量由等式 4-23给出：
+&nbsp;&nbsp;&nbsp;&nbsp;*关于类型k的交叉熵梯度向量*
+$$\nabla_{\theta_k}J(\Theta)=\frac1m\sum^m_{i=1}(\hat p_k^{(i)} - y_k^{(i)})\bold x^{(i)}$$
 
 
 ## <h2 id="20180201164000">第六章 决策树</h2>
